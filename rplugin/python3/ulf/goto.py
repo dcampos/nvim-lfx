@@ -19,7 +19,7 @@ class GotoHandler(ULFHandler):
         cursor = self.vim.current.window.cursor
         view = VimView(self.ulf.window, bufnr)
         point = Point(cursor[0] - 1, cursor[1])
-        session = self.ulf._session_for_buffer(bufnr)
+        session = self.ulf.session_for_view(view)
         if session is not None and session.has_capability(self.goto_kind + 'Provider'):
             request_type = getattr(Request, self.goto_kind)
             session.client.send_request(

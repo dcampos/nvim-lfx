@@ -140,6 +140,12 @@ class ULF:
         handler = WorkspaceSymbolHandler(self, self.vim)
         handler.run(args[0])
 
+    @pynvim.command('ULFReferences')
+    def references(self):
+        from .references import ReferencesHandler
+        handler = ReferencesHandler(self, self.vim)
+        handler.run()
+
     @pynvim.function('ULF_complete')
     def complete(self, args: List[Dict[str, Any]] = [{}]):
         from .completion import CompletionHandler
@@ -192,13 +198,16 @@ class ULF:
                 config['languages'].append({'languageId' : filetype})
         self.client_configs.update({'clients': configs})
 
-    def _session_for_buffer(self, bufnr) -> Session:
-        view = VimView(self.window, bufnr)
+    def session_for_view(self, view: VimView):
         for config in self.client_configs.all:
             for language in config.languages:
                 if language.id == view.language_id():
                     return self.manager.get_session(config.name, view.file_name())
         return None
+
+    def _session_for_buffer(self, bufnr) -> Session:
+        view = VimView(self.window, bufnr)
+        return self.session_for_view(view)
 
     def _error_handler(self, result):
         self.vim.async_call(self.vim.err_write, result)
