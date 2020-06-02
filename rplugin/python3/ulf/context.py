@@ -13,6 +13,7 @@ from .core.edit import parse_workspace_edit
 
 import threading
 
+
 class DummyLanguageHandlerDispatcher(object):
 
     def on_start(self, config_name: str, window: WindowLike) -> bool:
@@ -20,6 +21,7 @@ class DummyLanguageHandlerDispatcher(object):
 
     def on_initialized(self, config_name: str, window: WindowLike, client: Client) -> None:
         pass
+
 
 class ContextManager(object):
     def __init__(
@@ -97,11 +99,11 @@ class ContextManager(object):
         self.end_config_sessions(config_name)
 
     def start_active_views(self) -> None:
-        active_views = [] # TODO get_active_views(self._window)
+        active_views = []  # TODO get_active_views(self._window)
         debug('window {} starting {} initial views'.format(self._window.id(), len(active_views)))
         for view in active_views:
             if view.file_name():
-                self._workspace.update()
+                # self._workspace.update()
                 self._initialize_on_open(view)
                 self.documents.handle_did_open(view)
 
@@ -109,7 +111,7 @@ class ContextManager(object):
         file_name = view.file_name() or ""
         debug("Activating view {}".format(file_name))
         if not self.documents.has_document_state(file_name):
-            self._workspace.update()
+            # self._workspace.update()
             self._initialize_on_open(view)
 
     def _open_after_initialize(self, view: ViewLike) -> None:
@@ -182,6 +184,7 @@ class ContextManager(object):
 
         self._window.status_message("Starting " + config.name + "...")
         session = None  # type: Optional[Session]
+        self._workspace.update()
         workspace_folders = sorted_workspace_folders(self._workspace.folders, file_path)
         try:
             debug("going to start {}".format(config.name))

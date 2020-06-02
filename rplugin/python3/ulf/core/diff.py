@@ -3,13 +3,15 @@ import re
 
 from .typing import List, Tuple, Optional, Dict, Any
 from .logging import debug
+from .protocol import ContentChange, Point, Range
+
 
 class Change(object):
     def __init__(self, range_from, range_to) -> None:
-        self.range_from = range_from # type: Tuple[int, int]
-        self.range_to = range_to     # type: Tuple[int, int]
-        self.lines_from = []         # type: List[str]
-        self.lines_to = []           # type: List[str]
+        self.range_from = range_from  # type: Tuple[int, int]
+        self.range_to = range_to      # type: Tuple[int, int]
+        self.lines_from = []          # type: List[str]
+        self.lines_to = []            # type: List[str]
 
     def to_lsp(self) -> Dict[str, Any]:
         from_line = self.range_from[0] - 1
@@ -41,20 +43,24 @@ def parse_diff(fromfile: str, tofile: str) -> List[Change]:
 
     for line in diff:
         if line.startswith('@@'):
-            m = re.match('@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@\n', line)
+            m = re.match(r'@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@\n', line)
             line1 = int(m.group(1))
             size1 = int(m.group(2) or 1)
             line2 = int(m.group(3))
             size2 = int(m.group(4) or 1)
-            range_from = line1, line1 + size1
-            range_to = line2, line2 + size2
-            change = Change(range_from, range_to)
-            change.lines_from = lines1[line1 - 1:line1 + size1 - 1]
-            change.lines_to = lines2[line2 - 1:line2 + size2 - 1]
+            lines_from = lines1[line1 - 1:line1 + size1 - 1]
+            lines_to = lines2[line2 - 1:line2 + size2 - 1]
+            if len(lines_from) == 0:
+                line1 += 1
+            text = ''.join(lines_to)
+            start = Point(line1 - 1, 0)
+            end = Point(line1 + size1 - 1, 0)
+            change = ContentChange(text, Range(start, end))
             changes.append(change)
-            debug(change)
+            debug(change.to_lsp())
 
     return changes
+
 
 def content_changes(content_new: str, content_old: Optional[str] = None) -> List[Dict[str, Any]]:
     if not content_old:

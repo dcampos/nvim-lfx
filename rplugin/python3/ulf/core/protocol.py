@@ -379,7 +379,7 @@ class ContentChange(object):
             'text': self.text,
         }  # type: Dict[str, Any]
         if self.range:
-            change['range'] = self.range.to_lsp(),
+            change['range'] = self.range.to_lsp()
         if self.range_length:
             change['rangeLength'] = self.range_length
         return change

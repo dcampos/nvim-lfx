@@ -6,25 +6,13 @@ import os
 from pynvim import Nvim
 from threading import Timer
 
-def _find_root(file) -> str:
-    head, tail = os.path.split(file)
-    found = head
-    while tail != '':
-        for lookup in ['.gitmodules', '.git']:
-            lookup = os.path.join(head, lookup)
-            if os.path.exists(lookup):
-                found = head
-                break
-        head, tail = os.path.split(head)
-    _, dirname = os.path.split(found)
-    return found
-
 TAG = '[LSP]'
+
 
 class VimEditor(Editor):
     def __init__(self, ulf) -> None:
         self.ulf = ulf
-        self.vim = self.ulf.vim # type: Nvim
+        self.vim = self.ulf.vim  # type: Nvim
         self.window = VimWindow(self)
 
     def set_timeout_async(self, f: Callable, timeout_ms: int = 0) -> None:
@@ -71,7 +59,7 @@ class VimWindow(Window):
         return self.valid
 
     def folders(self) -> List[str]:
-        return [_find_root(self.vim.current.buffer.name)]
+        return [self.active_view().find_root()]
 
     def find_open_file(self, path: str) -> Optional[View]:
         bufnr = self.vim.funcs.bufnr(path)
@@ -85,14 +73,15 @@ class VimWindow(Window):
         self.editor.status_message(msg)
 
     def views(self) -> List[View]:
-        return [View(n) for n in range(0, self.vim.funcs.bufnr('$'))
-                if self.vim.funcs.buflisted(n)]
+        return [View(b.number) for b in self.vim.list_bufs()
+                if self.vim.api.buf_is_loaded(b)]
 
     def run_command(self, command_name: str, command_args: Dict[str, Any]) -> None:
         raise NotImplementedError()
 
     def extract_variables(self) -> Dict:
         return {}
+
 
 class VimView(View):
     def __init__(self, window: VimWindow, bufnr):
@@ -134,3 +123,18 @@ class VimView(View):
 
     def translate_tabs_to_spaces(self) -> bool:
         return self.vim.funcs.getbufvar(self.bufnr, '&expandtab')
+
+    def find_root(self) -> str:
+        patterns = (self._window.editor.ulf.root_patterns.get('*') +
+                    self._window.editor.ulf.root_patterns.get(self.language_id(), []))
+        head, tail = os.path.split(self.file_name())
+        found = head
+        while tail != '':
+            for lookup in patterns:
+                lookup = os.path.join(head, lookup)
+                if os.path.exists(lookup):
+                    found = head
+                    break
+            head, tail = os.path.split(head)
+        _, dirname = os.path.split(found)
+        return found

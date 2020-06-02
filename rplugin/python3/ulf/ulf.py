@@ -22,6 +22,7 @@ from .diagnostics import DiagnosticsPresenter
 # from .workspace_symbol import WorkspaceSymbolHandler
 # from .completion import CompletionHandler
 
+
 @pynvim.plugin
 class ULF:
 
@@ -37,8 +38,9 @@ class ULF:
         set_log_file(self.log_file)
         set_exception_logging(True)
         set_debug_logging(True)
-        self.client_configs = ClientConfigs() # type: ClientConfigs
+        self.client_configs = ClientConfigs()  # type: ClientConfigs
         self._update_configs()
+        self.root_patterns = vars.get('ulf#root_paterns', {'*': ['.gitmodules', '.git']})
         self.editor = VimEditor(self)
         self.window = VimWindow(self.editor)
         self.config_manager = VimConfigManager(self.window, self.client_configs.all)
@@ -46,12 +48,12 @@ class ULF:
                                             self.config_manager)
 
         def start_session(window: VimWindow,
-                           workspace_folders: List[WorkspaceFolder],
-                           config: ClientConfig,
-                           on_pre_initialize: Callable[[Session], None],
-                           on_post_initialize: Callable[[Session], None],
-                           on_post_exit: Callable[[str], None],
-                           on_stderr_log: Optional[Callable[[str], None]]) -> Optional[Session]:
+                          workspace_folders: List[WorkspaceFolder],
+                          config: ClientConfig,
+                          on_pre_initialize: Callable[[Session], None],
+                          on_post_initialize: Callable[[Session], None],
+                          on_post_exit: Callable[[str], None],
+                          on_stderr_log: Optional[Callable[[str], None]]) -> Optional[Session]:
             return create_session(
                 config=config,
                 workspace_folders=workspace_folders,
@@ -114,7 +116,7 @@ class ULF:
 
     @pynvim.autocmd('VimLeavePre', pattern='*', sync=True)
     def _on_vimleave(self):
-        self.window.valid = False;
+        self.window.valid = False
 
     @pynvim.command('ULFHover')
     def hover(self):
@@ -195,7 +197,7 @@ class ULF:
             config['languages'] = []
             for filetype in config.get('filetypes', []):
                 # TODO: convert appropriately
-                config['languages'].append({'languageId' : filetype})
+                config['languages'].append({'languageId': filetype})
         self.client_configs.update({'clients': configs})
 
     def session_for_view(self, view: VimView):
@@ -214,7 +216,9 @@ class ULF:
 
 # import functools
 
-HANDLERS = {} # type: List[str]
+
+HANDLERS: Dict[str, Any] = {}
+
 
 def request_handler(method):
     def request_decorator(func):
@@ -250,4 +254,3 @@ class ULFHandler(metaclass=abc.ABCMeta):
 
     def run(self):
         raise NotImplementedError()
-

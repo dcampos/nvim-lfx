@@ -45,7 +45,7 @@ class DiagnosticsPresenter(object):
         self._vim.async_call(self.show_all, file_path)
 
     def show_all(self, file_path):
-        diagnostics = self._diagnostics.get(file_path, {}) # type: Dict[str, List[Diagnostic]]
+        diagnostics = self._diagnostics.get(file_path, {})  # type: Dict[str, List[Diagnostic]]
         if not diagnostics:
             self._show_results(file_path, [])
         else:
