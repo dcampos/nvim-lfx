@@ -114,7 +114,7 @@ class VimView(View):
     def entire_content(self) -> str:
         content = '\n'.join(self.vim.current.buffer[:])
         eol = self.vim.funcs.getbufvar(self.bufnr, '&eol')
-        if eol:
+        if eol and content:
             content += '\n'
         return content
 

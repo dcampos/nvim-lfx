@@ -117,6 +117,7 @@ class ULF:
     @pynvim.autocmd('VimLeavePre', pattern='*', sync=True)
     def _on_vimleave(self):
         self.window.valid = False
+        self.manager.end_sessions()
 
     @pynvim.command('ULFHover')
     def hover(self):

@@ -48,10 +48,10 @@ def did_open_text_document_params(view: View, language_id: str) -> Dict[str, Any
     return {"textDocument": text_document_item(view, language_id)}
 
 
-def did_change_text_document_params(view: View, previous_content: str = None) -> Dict[str, Any]:
+def did_change_text_document_params(view: View, previous_content: str = '') -> Dict[str, Any]:
     return {
         "textDocument": versioned_text_document_identifier(view),
-        "contentChanges": content_changes(view.entire_content(), previous_content)
+        "contentChanges": content_changes(previous_content, view.entire_content())
     }
 
 

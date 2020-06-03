@@ -16,12 +16,13 @@ import json
 import argparse
 import os
 
-INTELEPHENSE=['node',
-         '/home/dpc/.npm-global/lib/node_modules/intelephense/lib/intelephense.js',
-         '--stdio']
-PYLS=[shutil.which('pyls')]
+INTELEPHENSE = ['node',
+                '/home/dpc/.npm-global/lib/node_modules/intelephense/lib/intelephense.js',
+                '--stdio']
+PYLS = [shutil.which('pyls')]
+WORKING_FILE = '/home/dpc/sandbox/ulf/rplugin/python3/ulf/core/diff.py'
 # WORKING_FILE='/home/dpc/Dev/eproc1g/web/modulos/sandbox/tools/TesteDatas.php'
-WORKING_FILE='/home/dpc/Dev/godot/my-circle-jump/Main.gd'
+# WORKING_FILE='/home/dpc/Dev/godot/my-circle-jump/Main.gd'
 
 initialized = False
 position = [1, 1]

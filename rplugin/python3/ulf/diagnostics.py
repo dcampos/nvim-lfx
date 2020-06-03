@@ -49,8 +49,10 @@ class DiagnosticsPresenter(object):
         if not diagnostics:
             self._show_results(file_path, [])
         else:
+            file_diagnostics = []
             for config_diagnostics in diagnostics.values():
-                self._show_results(file_path, config_diagnostics)
+                file_diagnostics.extend(config_diagnostics)
+            self._show_results(file_path, file_diagnostics)
 
     def _show_results(self, file_path, diagnostics: List[Diagnostic]):
         view = self._window.find_open_file(file_path)
@@ -71,6 +73,7 @@ class DiagnosticsPresenter(object):
                 'bufnr': bufnr
             })
 
+        self._vim.api.buf_set_var(bufnr, 'ulf_diagnostics', loclist)
         self._vim.call('ale#other_source#ShowResults', bufnr, 'ulf', loclist)
 
     def select(self, direction: int) -> None:
