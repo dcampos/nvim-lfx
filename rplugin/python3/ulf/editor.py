@@ -4,6 +4,7 @@ from .core.logging import debug
 import os
 
 from pynvim import Nvim
+from pynvim.api import Buffer
 from threading import Timer
 
 TAG = '[LSP]'
@@ -12,7 +13,7 @@ TAG = '[LSP]'
 class VimEditor(Editor):
     def __init__(self, ulf) -> None:
         self.ulf = ulf
-        self.vim = self.ulf.vim  # type: Nvim
+        self.vim: Nvim = self.ulf.vim
         self.window = VimWindow(self)
 
     def set_timeout_async(self, f: Callable, timeout_ms: int = 0) -> None:
@@ -25,7 +26,7 @@ class VimEditor(Editor):
     def status_message(self, message: str) -> None:
         self.vim.async_call(self.vim.out_write, "{} {}\n".format(TAG, message))
 
-    def ok_cancel_dialog(self, msg: str, ok_title: str=None) -> str:
+    def ok_cancel_dialog(self, msg: str, ok_title: str = None) -> str:
         raise NotImplementedError()
 
     def expand_variables(self, value, variables) -> str:
@@ -49,7 +50,7 @@ class VimWindow(Window):
 
     def __init__(self, editor: VimEditor):
         self.editor = editor
-        self.vim = editor.vim
+        self.vim: Nvim = editor.vim
         self.valid = True
 
     def id(self) -> int:
@@ -86,43 +87,42 @@ class VimWindow(Window):
 class VimView(View):
     def __init__(self, window: VimWindow, bufnr):
         self._window = window
-        self.vim = window.vim
-        self.bufnr = bufnr
+        self.vim: Nvim = window.vim
+        self.buffer: Buffer = self.vim.buffers[bufnr]
 
     def id(self) -> int:
-        return self.bufnr
+        return self.buffer.number
 
     def file_name(self):
-        return self.vim.funcs.fnamemodify(
-            self.vim.funcs.bufname(self.bufnr), ':p')
+        return self.vim.funcs.fnamemodify(self.buffer.name, ':p')
 
     def buffer_id(self):
-        return self.bufnr
+        return self.buffer.number
 
     def change_count(self) -> int:
-        return self.vim.funcs.getbufvar(self.bufnr, 'changedtick')
+        return self.buffer.vars['changedtick']
 
     def window(self) -> Window:
         return self._window
 
     def language_id(self) -> str:
-        return self.vim.funcs.getbufvar(self.bufnr, '&filetype')
+        return self.buffer.options['filetype']
 
     def set_status(self, key: str, status: str) -> None:
         pass
 
     def entire_content(self) -> str:
         content = '\n'.join(self.vim.current.buffer[:])
-        eol = self.vim.funcs.getbufvar(self.bufnr, '&eol')
+        eol = self.buffer.options['eol']
         if eol and content:
             content += '\n'
         return content
 
     def tab_size(self) -> int:
-        return self.vim.funcs.getbufvar(self.bufnr, '&shiftwidth')
+        return self.buffer.options['shiftwidth']
 
     def translate_tabs_to_spaces(self) -> bool:
-        return self.vim.funcs.getbufvar(self.bufnr, '&expandtab')
+        return self.buffer.options['expandtab']
 
     def find_root(self) -> str:
         patterns = (self._window.editor.ulf.root_patterns.get('*') +
