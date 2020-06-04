@@ -15,6 +15,7 @@ def parse_diff(fromfile: str, tofile: str) -> List[ContentChange]:
     diff = list(difflib.unified_diff(lines1, lines2, fromfile='a', tofile='b', n=0))
 
     debug(diff)
+    # print(''.join(diff))
 
     changes = []
 
@@ -23,10 +24,12 @@ def parse_diff(fromfile: str, tofile: str) -> List[ContentChange]:
             m = re.match(r'@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@\n', line)
             line1, size1, line2, size2 = [int(g) for g in m.groups('1')]
             # lines_from = lines1[line1 - 1:line1 + size1 - 1]
-            lines_to = lines2[line2 - 1:line2 + size2 - 1]
-            text = ''.join(lines_to)
             if size1 == 0:
                 line1 += 1
+            if size2 == 0:
+                line2 += 1
+            lines_to = lines2[line2 - 1:line2 + size2 - 1]
+            text = ''.join(lines_to)
             start = Point(line1 - 1, 0)
             end = Point(line1 + size1 - 1, 0)
             range_ = Range(start, end)
