@@ -254,7 +254,7 @@ class ULFHandler(metaclass=abc.ABCMeta):
 
     def current_view(self) -> VimView:
         bufnr = self.vim.current.buffer.number
-        return self.window.view_for_buffer(int(bufnr))
+        return self.ulf.window.view_for_buffer(int(bufnr))
 
     def cursor_point(self) -> Point:
         cursor = self.vim.current.window.cursor
