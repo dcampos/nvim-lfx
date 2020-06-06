@@ -52,6 +52,24 @@ class VimWindow(Window):
         self.editor = editor
         self.vim: Nvim = editor.vim
         self.valid = True
+        self._open_views = {}
+
+    def view_for_buffer(self, bufnr: int, create: bool = True) -> 'VimView':
+        if create:
+            try:
+                return self._open_views[bufnr]
+            except KeyError:
+                view = VimView(self, bufnr)
+                self._open_views[bufnr] = view
+                return view
+        else:
+            return self._open_views.get(bufnr)
+
+    def close_view(self, bufnr: int) -> None:
+        try:
+            del self._open_views[bufnr]
+        except KeyError:
+            pass
 
     def id(self) -> int:
         return self.ID
@@ -89,15 +107,18 @@ class VimView(View):
         self._window = window
         self.vim: Nvim = window.vim
         self.buffer: Buffer = self.vim.buffers[bufnr]
+        self._bufnr = bufnr
+        self._file_name = self.vim.funcs.fnamemodify(self.buffer.name, ':p')
+        self._language_id = self.buffer.options['filetype']
 
     def id(self) -> int:
-        return self.buffer.number
+        return self._bufnr
 
     def file_name(self):
-        return self.vim.funcs.fnamemodify(self.buffer.name, ':p')
+        return self._file_name
 
     def buffer_id(self):
-        return self.buffer.number
+        return self._bufnr
 
     def change_count(self) -> int:
         return self.buffer.vars['changedtick']
@@ -106,7 +127,7 @@ class VimView(View):
         return self._window
 
     def language_id(self) -> str:
-        return self.buffer.options['filetype']
+        return self._language_id
 
     def set_status(self, key: str, status: str) -> None:
         pass

@@ -85,7 +85,7 @@ class ULF:
     @pynvim.autocmd('BufEnter,BufWinEnter,FileType', pattern='*', eval='expand("<abuf>")', sync=True)
     def _on_did_open(self, bufnr: int):
         debug('buffer {} opened'.format(bufnr))
-        view = VimView(self.window, int(bufnr))
+        view = self.window.view_for_buffer(int(bufnr))
         self.manager.activate_view(view)
         self.documents.handle_did_open(view)
         # self.vim.request('nvim_buf_attach',
@@ -95,24 +95,31 @@ class ULF:
 
     @pynvim.autocmd('BufWritePre', pattern='*', eval='expand("<abuf>")')
     def _on_will_save(self, bufnr: int):
-        view = VimView(self.window, int(bufnr))
+        view = self.window.view_for_buffer(int(bufnr))
         self.documents.handle_will_save(view, reason=1)
 
     @pynvim.autocmd('BufWritePost', pattern='*', eval='expand("<abuf>")')
     def _on_did_save(self, bufnr: int):
-        view = VimView(self.window, int(bufnr))
+        view = self.window.view_for_buffer(int(bufnr))
         self.documents.handle_did_save(view)
 
     @pynvim.autocmd('TextChanged,TextChangedP,TextChangedI', pattern='*', eval='expand("<abuf>")')
     def _on_did_change(self, bufnr: int):
-        view = VimView(self.window, int(bufnr))
+        view = self.window.view_for_buffer(int(bufnr))
         self.documents.handle_did_change(view)
 
     @pynvim.autocmd('BufWipeout,BufDelete,BufUnload', pattern='*', eval='expand("<abuf>")')
     def _on_did_close(self, bufnr: int):
-        view = VimView(self.window, int(bufnr))
-        self.manager.handle_view_closed(view)
-        self.documents.handle_did_close(view)
+        if not self.vim.api.buf_is_loaded(int(bufnr)):
+            return
+
+        view = self.window.view_for_buffer(int(bufnr), False)
+        debug("Event: did_close - %s - %s" % (bufnr, view))
+
+        if view:
+            self.manager.handle_view_closed(view)
+            self.documents.handle_did_close(view)
+            self.window.close_view(int(bufnr))
 
     @pynvim.autocmd('VimLeavePre', pattern='*', sync=True)
     def _on_vimleave(self):
@@ -166,7 +173,7 @@ class ULF:
     @pynvim.function('ULF_show_diagnostics')
     def show_diagnostics(self, args):
         bufnr = args[0] or -1
-        view = VimView(self.window, int(bufnr))
+        view = self.window.view_for_buffer(int(bufnr))
         if view:
             self.diagnostics_presenter.show_all(view.file_name())
 
@@ -209,7 +216,7 @@ class ULF:
         return None
 
     def _session_for_buffer(self, bufnr) -> Session:
-        view = VimView(self.window, bufnr)
+        view = self.window.view_for_buffer(int(bufnr))
         return self.session_for_view(view)
 
     def _error_handler(self, result):
@@ -247,7 +254,7 @@ class ULFHandler(metaclass=abc.ABCMeta):
 
     def current_view(self) -> VimView:
         bufnr = self.vim.current.buffer.number
-        return VimView(self.ulf.window, bufnr)
+        return self.window.view_for_buffer(int(bufnr))
 
     def cursor_point(self) -> Point:
         cursor = self.vim.current.window.cursor

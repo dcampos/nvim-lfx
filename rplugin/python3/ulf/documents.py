@@ -100,6 +100,7 @@ class VimDocumentHandler(object):
 
     def handle_did_close(self, view: View) -> None:
         file_name = view.file_name() or ""
+        debug("Handling did_close", file_name)
         try:
             self._document_states.remove(file_name)
         except KeyError:
