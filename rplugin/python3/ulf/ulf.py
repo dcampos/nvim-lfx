@@ -46,6 +46,8 @@ class ULF:
         self.config_manager = VimConfigManager(self.window, self.client_configs.all)
         self.documents = VimDocumentHandler(self.editor, self.settings, None, self.window,
                                             self.config_manager)
+        self.documents.on_attach = self._on_attach
+        self.documents.on_detach = self._on_detach
 
         def start_session(window: VimWindow,
                           workspace_folders: List[WorkspaceFolder],
@@ -82,34 +84,36 @@ class ULF:
 
         self.vim.vars['ulf#_channel_id'] = self.vim.channel_id
 
-    @pynvim.autocmd('BufEnter,BufWinEnter,FileType', pattern='*', eval='expand("<abuf>")', sync=True)
-    def _on_did_open(self, bufnr: int):
+    def _on_attach(self, view: VimView) -> None:
+        self.vim.call('ulf#attach_buffer', view.buffer_id())
+
+    def _on_detach(self, view: VimView) -> None:
+        pass
+
+    @pynvim.function('ULF_handle_did_open', sync=True, eval='expand("<abuf>")')
+    def _on_did_open(self, args, bufnr):
         debug('buffer {} opened'.format(bufnr))
         view = self.window.view_for_buffer(int(bufnr))
         self.manager.activate_view(view)
         self.documents.handle_did_open(view)
-        # self.vim.request('nvim_buf_attach',
-        #                   int(bufnr),
-        #                   True,
-        #                   {})
 
-    @pynvim.autocmd('BufWritePre', pattern='*', eval='expand("<abuf>")')
-    def _on_will_save(self, bufnr: int):
+    @pynvim.function('ULF_handle_will_save', eval='expand("<abuf>")')
+    def _on_will_save(self, args, bufnr):
         view = self.window.view_for_buffer(int(bufnr))
         self.documents.handle_will_save(view, reason=1)
 
-    @pynvim.autocmd('BufWritePost', pattern='*', eval='expand("<abuf>")')
-    def _on_did_save(self, bufnr: int):
+    @pynvim.function('ULF_handle_did_save', eval='expand("<abuf>")')
+    def _on_did_save(self, args, bufnr):
         view = self.window.view_for_buffer(int(bufnr))
         self.documents.handle_did_save(view)
 
-    @pynvim.autocmd('TextChanged,TextChangedP,TextChangedI', pattern='*', eval='expand("<abuf>")')
-    def _on_did_change(self, bufnr: int):
+    @pynvim.function('ULF_handle_did_change', eval='expand("<abuf>")')
+    def _on_did_change(self, args, bufnr):
         view = self.window.view_for_buffer(int(bufnr))
         self.documents.handle_did_change(view)
 
-    @pynvim.autocmd('BufWipeout,BufDelete,BufUnload', pattern='*', eval='expand("<abuf>")')
-    def _on_did_close(self, bufnr: int):
+    @pynvim.function('ULF_handle_did_close', eval='expand("<abuf>")')
+    def _on_did_close(self, args, bufnr):
         if not self.vim.api.buf_is_loaded(int(bufnr)):
             return
 
@@ -121,8 +125,8 @@ class ULF:
             self.documents.handle_did_close(view)
             self.window.close_view(int(bufnr))
 
-    @pynvim.autocmd('VimLeavePre', pattern='*', sync=True)
-    def _on_vimleave(self):
+    @pynvim.function('ULF_handle_leave', sync=True)
+    def _on_vimleave(self, args):
         self.window.valid = False
         self.manager.end_sessions()
 

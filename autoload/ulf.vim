@@ -1,5 +1,24 @@
 let g:ulf#completion_results = []
 
+function! ulf#enable() abort
+    augroup ulf
+        autocmd!
+        autocmd BufEnter,BufWinEnter,FileType * call ULF_handle_did_open() 
+        autocmd BufWipeout,BufDelete,BufUnload * call ULF_handle_did_close()
+        autocmd VimLeavePre * call ULF_handle_leave() 
+    augroup END
+endfunction
+
+function! ulf#attach_buffer(bufnr) abort
+    augroup ulf_buffer
+        execute 'autocmd! * <buffer=' . a:bufnr . '>'
+        execute 'autocmd BufWritePre <buffer=' . a:bufnr . '> call ULF_handle_will_save()'
+        execute 'autocmd BufWritePost <buffer=' . a:bufnr . '> call ULF_handle_did_save()'
+        execute 'autocmd TextChanged,TextChangedP,TextChangedI <buffer=' . a:bufnr
+                    \ . '> call ULF_handle_did_change()'
+    augroup END
+endfunction
+
 function! ulf#omni(findstart, base) abort
     if a:findstart
         return s:find_start()

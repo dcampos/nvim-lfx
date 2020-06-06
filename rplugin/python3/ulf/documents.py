@@ -28,6 +28,8 @@ class VimDocumentHandler(object):
         self._window = window
         self.changed = nop
         self.saved = nop
+        self.on_attach = nop
+        self.on_detach = nop
 
     def add_session(self, session: Session) -> None:
         self._sessions.setdefault(session.config.name, []).append(session)
@@ -39,7 +41,7 @@ class VimDocumentHandler(object):
 
     def reset(self) -> None:
         # for view in self._window.views():
-        #     self.detach_view(view)
+        #     self._detach_view(view)
         self._document_states.clear()
 
     def has_document_state(self, path: str) -> bool:
@@ -75,10 +77,10 @@ class VimDocumentHandler(object):
         return self._configs.syntax_config_languages(view)
 
     def _attach_view(self, view: View, sessions: List[Session]) -> None:
-        pass
+        self.on_attach(view)
 
-    def detach_view(self, view: View) -> None:
-        pass
+    def _detach_view(self, view: View) -> None:
+        self.on_detach(view)
 
     def handle_did_open(self, view: View) -> None:
         file_name = view.file_name()
