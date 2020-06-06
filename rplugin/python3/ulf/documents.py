@@ -10,7 +10,9 @@ from .core.editor import View, Window
 from .core.views import did_open, did_close, did_change, will_save, did_save
 from .core.protocol import TextDocumentSyncKindIncremental
 
+
 def nop(): return None
+
 
 class VimDocumentHandler(object):
     def __init__(self, editor: Any, settings: Settings, workspace: ProjectFolders,
@@ -19,7 +21,7 @@ class VimDocumentHandler(object):
         self._settings = settings
         self._configs = configs
         self._document_states = set()  # type: Set[str]
-        self._content_states = {} # type: Dict[str, str]
+        self._content_states = {}  # type: Dict[str, str]
         self._pending_buffer_changes = dict()  # type: Dict[int, Dict]
         self._sessions = dict()  # type: Dict[str, List[Session]]
         self._workspace = workspace
@@ -45,7 +47,7 @@ class VimDocumentHandler(object):
 
     def _get_applicable_sessions(self, view: View) -> List[Session]:
         sessions = []  # type: List[Session]
-        language_id= view.language_id()
+        language_id = view.language_id()
 
         for config_name, config_sessions in self._sessions.items():
             for session in config_sessions:
@@ -181,7 +183,9 @@ class VimDocumentHandler(object):
                             session.client.send_notification(did_change(view))
                 self._content_states[file_name] = view.entire_content()
 
+
 class VimConfigManager(object):
+
     def __init__(self, window: Window, global_configs: List[ClientConfig]) -> None:
         self._window = window
         self._global_configs = global_configs
@@ -196,7 +200,8 @@ class VimConfigManager(object):
 
     def syntax_configs(self, view: View, include_disabled: bool = False) -> List[ClientConfig]:
         language_id = view.language_id()
-        return list(filter(lambda c: config_supports_language_id(c, language_id) and (c.enabled or include_disabled), self.all))
+        return list(filter(lambda c: config_supports_language_id(c, language_id)
+                           and (c.enabled or include_disabled), self.all))
 
     def syntax_supported(self, view: View) -> bool:
         language_id = view.language_id()

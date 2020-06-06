@@ -8,6 +8,7 @@ from .core.protocol import Point
 from .editor import VimView
 from pynvim import Nvim
 
+
 class GotoHandler(ULFHandler):
 
     def __init__(self, ulf, vim: Nvim, kind='definition'):
@@ -66,9 +67,10 @@ class GotoHandler(ULFHandler):
         #     debug('{}: {}:{}'.format(item['uri'], item['range']['start'], item['range']['end']))
 
     def _goto(self, file, line, col=1):
-        debug(file)
-        self.vim.command('edit {}'.format(file))
-        self.vim.command('call cursor({}, {})'.format(line, col))
+        bufnr = self.vim.funcs.bufnr(file, True)
+        self.vim.command("normal m'")
+        self.vim.command('buffer %d' % bufnr)
+        self.vim.funcs.cursor(line, col)
 
     def _display_locations(self, locations):
         items = map(lambda item: {'filename': item[0],
