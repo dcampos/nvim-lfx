@@ -130,32 +130,32 @@ class ULF:
         self.window.valid = False
         self.manager.end_sessions()
 
-    @pynvim.command('ULFHover')
-    def hover(self):
+    @pynvim.function('ULF_hover')
+    def hover(self, args):
         from .hover import HoverHandler
         handler = HoverHandler(self, self.vim)
         handler.run()
 
-    @pynvim.command('ULFSignatureHelp')
-    def signature_help(self):
+    @pynvim.function('ULF_signature_help')
+    def signature_help(self, args):
         from .signature_help import SignatureHelpHandler
         handler = SignatureHelpHandler(self, self.vim)
         handler.run()
 
-    @pynvim.command('ULFGotoDefinition')
-    def goto_definition(self):
+    @pynvim.function('ULF_goto_definition')
+    def goto_definition(self, args):
         from .goto import GotoHandler
         handler = GotoHandler(self, self.vim)
         handler.run()
 
-    @pynvim.command('ULFWorkspaceSymbol', nargs='1')
+    @pynvim.function('ULF_workspace_symbol')
     def workspace_symbol(self, args):
         from .workspace_symbol import WorkspaceSymbolHandler
         handler = WorkspaceSymbolHandler(self, self.vim)
         handler.run(args[0])
 
-    @pynvim.command('ULFReferences')
-    def references(self):
+    @pynvim.function('ULF_references')
+    def references(self, args):
         from .references import ReferencesHandler
         handler = ReferencesHandler(self, self.vim)
         handler.run()
@@ -190,18 +190,6 @@ class ULF:
             instance.run()
         else:
             debug('no handler found for method={}'.format(method))
-
-    # @pynvim.rpc_export('nvim_buf_lines_event')
-    # def _buf_lines_event(self, *args):
-    #     debug('------> lines event: {}'.format(args))
-
-    # @pynvim.rpc_export('nvim_buf_detach_event')
-    # def _buf_detach_event(self, *args):
-    #     debug('------> detach event: {}'.format(args))
-
-    # @pynvim.rpc_export('nvim_buf_changedtick_event')
-    # def _buf_changedtick_event(self, *args):
-    #     debug('------> changedtick event: {}'.format(args))
 
     def _update_configs(self) -> None:
         configs = self.vim.vars.get('ulf#configs', {})

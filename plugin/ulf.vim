@@ -8,4 +8,4 @@ if exists('g:loaded_ulf')
 endif
 let g:loaded_ulf = 1
 
-" call ulf#enable()
+call ulf#enable()

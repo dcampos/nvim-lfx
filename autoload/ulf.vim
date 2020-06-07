@@ -7,6 +7,12 @@ function! ulf#enable() abort
         autocmd BufWipeout,BufDelete,BufUnload * call ULF_handle_did_close()
         autocmd VimLeavePre * call ULF_handle_leave() 
     augroup END
+
+    command! ULFHover call ULF_hover()
+    command! ULFSignatureHelp call ULF_signature_help()
+    command! ULFGotoDefinition call ULF_goto_definition()
+    command! -nargs=1 ULFWorkspaceSymbol call ULF_workspace_symbol(<q-args>)
+    command! ULFReferences call ULF_references()
 endfunction
 
 function! ulf#attach_buffer(bufnr) abort
