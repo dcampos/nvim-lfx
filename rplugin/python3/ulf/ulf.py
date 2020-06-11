@@ -15,6 +15,7 @@ from .documents import VimDocumentHandler, VimConfigManager
 from .editor import VimEditor, VimWindow, VimView
 from .context import ContextManager, DummyLanguageHandlerDispatcher
 from .diagnostics import DiagnosticsPresenter
+from .util import to_char_index
 
 # from .hover import HoverHandler
 # from .signature_help import SignatureHelpHandler
@@ -85,6 +86,7 @@ class ULF:
         self.vim.vars['ulf#_channel_id'] = self.vim.channel_id
 
     def _on_attach(self, view: VimView) -> None:
+        debug('attached buffer %d' % view.buffer_id())
         self.vim.call('ulf#attach_buffer', view.buffer_id())
 
     def _on_detach(self, view: VimView) -> None:
@@ -158,6 +160,13 @@ class ULF:
     def references(self, args):
         from .references import ReferencesHandler
         handler = ReferencesHandler(self, self.vim)
+        handler.run()
+
+    @pynvim.function('ULF_rename')
+    def rename(self, args):
+        new_name = args.pop()
+        from .rename import RenameHandler
+        handler = RenameHandler(self, self.vim, new_name)
         handler.run()
 
     @pynvim.function('ULF_complete')
@@ -250,7 +259,12 @@ class ULFHandler(metaclass=abc.ABCMeta):
 
     def cursor_point(self) -> Point:
         cursor = self.vim.current.window.cursor
-        return Point(cursor[0] - 1, cursor[1])
+        row = cursor[0] - 1
+        line_text = self.vim.current.buffer[row]
+        col = to_char_index(line_text, cursor[1])
+        return Point(row, col)
 
     def run(self):
         raise NotImplementedError()
+
+

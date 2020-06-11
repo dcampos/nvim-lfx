@@ -161,6 +161,9 @@ class VimDocumentHandler(object):
                 self.changed()
 
     def notify_did_change(self, view: View) -> None:
+        if not view.is_valid():
+            return
+
         config_languages = self._config_languages(view)
 
         if not len(config_languages):

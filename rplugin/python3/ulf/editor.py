@@ -44,6 +44,44 @@ class VimEditor(Editor):
             self.vim.async_call(on_result, result)
         self.vim.async_call(input)
 
+    def apply_edits(self, changes):
+        for file_path, changelist in changes.items():
+            bufnr = self.vim.funcs.bufnr(file_path)
+
+            buf_exists = bufnr != -1
+
+            if buf_exists:
+                buffer_lines = self.vim.funcs.readfile(file_path)
+            else:
+                buffer_lines = self.vim.buffers[bufnr][:]
+
+            debug('applying changes to %s' % file_path)
+
+            for change in reversed(changelist):
+                buffer_lines = self.apply_edit(buffer_lines, change)
+
+            # buffer_lines = self.vim.api.buf_get_lines(bufnr, 0, -1, False)
+            self.vim.funcs.writefile(buffer_lines, file_path)
+
+            if buf_exists:
+                self.vim.api.buf_set_lines(bufnr, 0, -1, False, buffer_lines)
+                self.vim.api.buf_set_option(bufnr, 'modified', False)
+
+    def apply_edit(self, source_lines, edit) -> None:
+        (start_line, start_col), (end_line, end_col), new_text = edit
+
+        text_before = (source_lines[start_line][:start_col]
+                       if start_line < len(source_lines) else '')
+        text_after = (source_lines[end_line][end_col:]
+                      if end_line < len(source_lines) else '')
+
+        new_text = text_before + new_text + text_after
+        new_lines = new_text.splitlines()
+
+        source_lines[start_line:end_line + 1] = new_lines
+
+        return source_lines
+
 
 class VimWindow(Window):
     ID = 1
@@ -144,6 +182,9 @@ class VimView(View):
 
     def translate_tabs_to_spaces(self) -> bool:
         return self.buffer.options['expandtab']
+
+    def is_valid(self):
+        return self.vim.api.buf_is_valid(self._bufnr)
 
     def find_root(self) -> str:
         patterns = (self._window.editor.ulf.root_patterns.get('*') +

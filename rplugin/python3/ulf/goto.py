@@ -5,7 +5,7 @@ from .core.logging import debug
 from .core.url import uri_to_filename
 from .core.typing import Tuple, List
 from .core.protocol import Point
-from .editor import VimView
+from .util import to_byte_index
 from pynvim import Nvim
 
 
@@ -16,10 +16,8 @@ class GotoHandler(ULFHandler):
         self.goto_kind = kind
 
     def run(self) -> None:
-        bufnr = self.vim.current.buffer.number
-        cursor = self.vim.current.window.cursor
-        view = VimView(self.ulf.window, bufnr)
-        point = Point(cursor[0] - 1, cursor[1])
+        view = self.current_view()
+        point = self.cursor_point()
         session = self.ulf.session_for_view(view)
         if session is not None and session.has_capability(self.goto_kind + 'Provider'):
             request_type = getattr(Request, self.goto_kind)
@@ -28,7 +26,7 @@ class GotoHandler(ULFHandler):
                 self._handle_response,
                 lambda res: debug(res))
         else:
-            debug('Session is none for buffer={}'.format(bufnr))
+            debug('Session is none for buffer={}'.format(view.buffer_id()))
 
     def _handle_response(self, response) -> None:
         def process_response_list(responses: list) -> List[Tuple[str, str, Tuple[int, int]]]:
@@ -66,14 +64,28 @@ class GotoHandler(ULFHandler):
         # for item in response:
         #     debug('{}: {}:{}'.format(item['uri'], item['range']['start'], item['range']['end']))
 
+    def _adjust_lsp_col(self, file_path, row, col):
+        """Adjust LSP point to byte index"""
+        bufnr = self.vim.funcs.bufnr(file_path, True)
+        line_text = self.vim.api.buf_get_lines(bufnr, row - 1, row, False)[0]
+        byte_index = to_byte_index(line_text, col - 1)
+        col = byte_index + 1
+        return col
+
     def _goto(self, file, line, col=1):
         bufnr = self.vim.funcs.bufnr(file, True)
+        col = self._adjust_lsp_col(file, line, col)
         self.vim.command("normal m'")
         self.vim.command('buffer %d' % bufnr)
         self.vim.funcs.cursor(line, col)
 
     def _display_locations(self, locations):
-        items = map(lambda item: {'filename': item[0],
-                                  'lnum': item[2][0], 'col': item[2][1]}, locations)
-        self.vim.call('setqflist', list(items))
+        def to_item(location):
+            file_name, _, (row, col) = location
+            col = self._adjust_lsp_col(file_name, row, col)
+            return {'filename': file_name, 'lnum': row, 'col': col}
+
+        items = list(map(to_item, locations))
+
+        self.vim.call('setqflist', items)
         self.vim.command('copen')

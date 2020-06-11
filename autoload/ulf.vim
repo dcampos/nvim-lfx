@@ -13,6 +13,14 @@ function! ulf#enable() abort
     command! ULFGotoDefinition call ULF_goto_definition()
     command! -nargs=1 ULFWorkspaceSymbol call ULF_workspace_symbol(<q-args>)
     command! ULFReferences call ULF_references()
+    command! ULFRename call s:request_rename()
+endfunction
+
+function! s:request_rename() abort
+    let l:new_name = input('New name: ')
+    if l:new_name !=# ''
+        call ULF_rename(l:new_name)
+    endif
 endfunction
 
 function! ulf#attach_buffer(bufnr) abort
