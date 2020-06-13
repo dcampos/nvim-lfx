@@ -38,7 +38,8 @@ class MessageRequestHandler():
             self._send_user_choice
         )
 
+
 def show_notification(view: View, source: str, message_type: int, message: str, titles: List[str],
                       on_result: Callable) -> None:
     # show_message_request(source, message_type, message, titles, on_result)
-    pass # TODO
+    view.show_menu(titles, on_result, message)

@@ -1,6 +1,6 @@
-from .editor import VimWindow
+from .editor import VimWindow, VimView
 from .core.typing import Dict, List, Any
-from .core.protocol import DiagnosticSeverity
+from .core.protocol import DiagnosticSeverity, Point
 from .core.diagnostics import Diagnostic, DocumentsState
 from .core.logging import debug
 
@@ -81,3 +81,18 @@ class DiagnosticsPresenter(object):
 
     def deselect(self) -> None:
         pass
+
+
+def view_diagnostics(view: VimView) -> Dict[str, List[Diagnostic]]:
+    return view.diagnostics()
+
+
+def filter_by_point(file_diagnostics: Dict[str, List[Diagnostic]], point: Point) -> Dict[str, List[Diagnostic]]:
+    diagnostics_by_config = {}
+    for config_name, diagnostics in file_diagnostics.items():
+        point_diagnostics = [
+            diagnostic for diagnostic in diagnostics if diagnostic.range.contains(point)
+        ]
+        if point_diagnostics:
+            diagnostics_by_config[config_name] = point_diagnostics
+    return diagnostics_by_config

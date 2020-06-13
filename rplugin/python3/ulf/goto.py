@@ -67,6 +67,9 @@ class GotoHandler(ULFHandler):
     def _adjust_lsp_col(self, file_path, row, col):
         """Adjust LSP point to byte index"""
         bufnr = self.vim.funcs.bufnr(file_path, True)
+        if not self.vim.api.buf_is_loaded(bufnr):
+            self.vim.funcs.bufload(bufnr)
+        debug("{}:{},{}, bufnr={}".format(file_path, row, col, bufnr))
         line_text = self.vim.api.buf_get_lines(bufnr, row - 1, row, False)[0]
         byte_index = to_byte_index(line_text, col - 1)
         col = byte_index + 1

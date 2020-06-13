@@ -28,4 +28,4 @@ class RenameHandler(ULFHandler):
         changes = parse_workspace_edit(response)
         # debug(json.dumps(changes))
 
-        self.vim.async_call(self.ulf.editor.apply_edits, changes)
+        self.vim.async_call(self.ulf.editor.apply_workspace_edits, changes)

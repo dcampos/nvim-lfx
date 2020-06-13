@@ -7,7 +7,7 @@ from pynvim import Nvim
 from .core.typing import Dict, List, Callable, Optional, Any
 from .core.settings import settings, ClientConfigs, ClientConfig
 from .core.sessions import create_session, Session
-from .core.protocol import WorkspaceFolder, Point
+from .core.protocol import WorkspaceFolder, Point, Range
 from .core.logging import set_log_file, set_debug_logging, set_exception_logging, debug
 from .core.workspace import ProjectFolders
 from .core.diagnostics import DiagnosticsStorage
@@ -68,6 +68,7 @@ class ULF:
                 on_stderr_log=on_stderr_log)
 
         self.diagnostics_presenter = DiagnosticsPresenter(self.window, self.documents)
+        self.diagnostics = DiagnosticsStorage(self.diagnostics_presenter)
 
         self.manager = ContextManager(
             self.window,
@@ -75,7 +76,7 @@ class ULF:
             self.settings,
             self.config_manager,
             self.documents,
-            DiagnosticsStorage(self.diagnostics_presenter),
+            self.diagnostics,
             start_session,
             self.editor,
             DummyLanguageHandlerDispatcher())
@@ -169,6 +170,13 @@ class ULF:
         handler = RenameHandler(self, self.vim, new_name)
         handler.run()
 
+    @pynvim.function('ULF_code_actions')
+    def code_actions(self, args: List[Dict[str, Any]] = [{}]):
+        visual = args.pop() if len(args) else False
+        from .code_actions import CodeActionsHandler
+        handler = CodeActionsHandler(self, self.vim, visual)
+        handler.run()
+
     @pynvim.function('ULF_complete')
     def complete(self, args: List[Dict[str, Any]] = [{}]):
         from .completion import CompletionHandler
@@ -216,6 +224,14 @@ class ULF:
                     return self.manager.get_session(config.name, view.file_name())
         return None
 
+    def sessions_for_view(self, view: VimView, capability: None) -> List[Session]:
+        for config in self.client_configs.all:
+            for language in config.languages:
+                if language.id == view.language_id():
+                    session = self.manager.get_session(config.name, view.file_name())
+                    if not capability or session.has_capability(capability):
+                        yield session
+
     def _session_for_buffer(self, bufnr) -> Session:
         view = self.window.view_for_buffer(int(bufnr))
         return self.session_for_view(view)
@@ -259,12 +275,18 @@ class ULFHandler(metaclass=abc.ABCMeta):
 
     def cursor_point(self) -> Point:
         cursor = self.vim.current.window.cursor
-        row = cursor[0] - 1
+        return self._create_point(*cursor)
+
+    def selection_range(self) -> Range:
+        begin = self.vim.current.buffer.mark('<')
+        end = self.vim.current.buffer.mark('>')
+        return Range(self._create_point(*begin), self._create_point(*end))
+
+    def _create_point(self, row: int, col: int) -> Point:
+        row -= 1
         line_text = self.vim.current.buffer[row]
-        col = to_char_index(line_text, cursor[1])
+        col = to_char_index(line_text, col)
         return Point(row, col)
 
     def run(self):
         raise NotImplementedError()
-
-

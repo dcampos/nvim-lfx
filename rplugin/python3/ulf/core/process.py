@@ -49,7 +49,8 @@ def start_server(
         stdout=subprocess.PIPE,
         stderr=stderr_destination,
         cwd=working_dir,
-        env=env,
+        # env=env,
+        env=os.environ.copy(),
         startupinfo=si)
 
     if on_stderr_log is not None:

@@ -10,6 +10,7 @@ from .core.logging import debug
 from .core.message_request_handler import MessageRequestHandler
 from .core.rpc import Client, Response, EditorLogger, Notification
 from .core.edit import parse_workspace_edit
+from .editor import VimEditor
 
 import threading
 
@@ -47,7 +48,7 @@ class ContextManager(object):
         self._sessions = dict()  # type: Dict[str, List[Session]]
         self._next_initialize_views = list()  # type: List[ViewLike]
         self._start_session = session_starter
-        self._editor = editor
+        self._editor = editor  # type: VimEditor
         self._handlers = handler_dispatcher
         self._restarting = False
         self._on_closed = on_closed
@@ -203,6 +204,8 @@ class ContextManager(object):
                 "Server will be disabled for this window"
             ]).format(config.name, str(e))
 
+            debug(message)
+
             self._configs.disable_temporarily(config.name)
             self._editor.message_dialog(message)
 
@@ -240,7 +243,7 @@ class ContextManager(object):
     def _apply_workspace_edit(self, params: Dict[str, Any], client: Client, request_id: int) -> None:
         edit = params.get('edit', dict())
         changes = parse_workspace_edit(edit)
-        self._window.run_command('lsp_apply_workspace_edit', {'changes': changes})
+        self._editor.set_timeout_async(lambda: self._editor.apply_workspace_edits(changes))
         # TODO: We should ideally wait for all changes to have been applied.
         # This however seems overly complicated, because we have to bring along a string representation of the
         # client through the editor-command invocations (as well as the request ID, but that is easy), and then

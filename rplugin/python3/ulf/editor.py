@@ -1,6 +1,8 @@
-from .core.typing import Callable, List, Optional, Any, Dict
+from .core.typing import Callable, List, Optional, Any, Dict, Generator
 from .core.editor import Editor, Window, View
+from .core.sessions import Session
 from .core.logging import debug
+from .core.diagnostics import Diagnostic
 import os
 
 from pynvim import Nvim
@@ -44,7 +46,7 @@ class VimEditor(Editor):
             self.vim.async_call(on_result, result)
         self.vim.async_call(input)
 
-    def apply_edits(self, changes):
+    def apply_workspace_edits(self, changes):
         for file_path, changelist in changes.items():
             bufnr = self.vim.funcs.bufnr(file_path)
 
@@ -144,6 +146,7 @@ class VimView(View):
     def __init__(self, window: VimWindow, bufnr):
         self._window = window
         self.vim: Nvim = window.vim
+        self.editor: VimEditor = window.editor
         self.buffer: Buffer = self.vim.buffers[bufnr]
         self._bufnr = bufnr
         self._file_name = self.vim.funcs.fnamemodify(self.buffer.name, ':p')
@@ -185,6 +188,24 @@ class VimView(View):
 
     def is_valid(self):
         return self.vim.api.buf_is_valid(self._bufnr)
+
+    def show_menu(self, options: List[str], handler: Callable[[int], None], message: str = None) -> None:
+        def show_and_handle():
+            items = ['{}. {}'.format(i+1, o) for i, o in enumerate(options)]
+            if message:
+                items.insert(0, message)
+            res = self.vim.funcs.inputlist(items) - 1
+            handler(res)
+
+        if options:
+            self.vim.async_call(show_and_handle)
+
+    def available_sessions(self, capability: str = None) -> Generator[Session]:
+        return self.editor.ulf.sessions_for_view(self, capability)
+
+    def diagnostics(self) -> Dict[str, List[Diagnostic]]:
+        diagnostics = self.editor.ulf.diagnostics.get()
+        return diagnostics.get(self.file_name(), {})
 
     def find_root(self) -> str:
         patterns = (self._window.editor.ulf.root_patterns.get('*') +

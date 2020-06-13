@@ -14,6 +14,8 @@ function! ulf#enable() abort
     command! -nargs=1 ULFWorkspaceSymbol call ULF_workspace_symbol(<q-args>)
     command! ULFReferences call ULF_references()
     command! ULFRename call s:request_rename()
+    command! ULFCodeActions call ULF_code_actions(v:false)
+    command! ULFCodeActionsVisual call ULF_code_actions(v:true)
 endfunction
 
 function! s:request_rename() abort
