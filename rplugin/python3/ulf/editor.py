@@ -3,6 +3,7 @@ from .core.editor import Editor, Window, View
 from .core.sessions import Session
 from .core.logging import debug
 from .core.diagnostics import Diagnostic
+from .util import to_byte_index, to_char_index
 import os
 
 from pynvim import Nvim
@@ -48,6 +49,28 @@ class VimEditor(Editor):
             result = self.vim.funcs.inputlist(titles)
             self.vim.async_call(on_result, result)
         self.vim.async_call(input)
+
+    def adjust_from_lsp(self, file_path, row, col):
+        """Adjust LSP point to byte index"""
+        bufnr = self.vim.funcs.bufnr(file_path, True)
+        if not self.vim.api.buf_is_loaded(bufnr):
+            self.vim.funcs.bufload(bufnr)
+        line_text = self.vim.api.buf_get_lines(bufnr, row, row+1, False)[0]
+        byte_index = to_byte_index(line_text, col)
+        col = byte_index + 1
+        row = row + 1
+        return row, col
+
+    def adjust_to_lsp(self, file_path, row, col):
+        """Adjust byte index (1-based) to char index (0-based)"""
+        bufnr = self.vim.funcs.bufnr(file_path, True)
+        if not self.vim.api.buf_is_loaded(bufnr):
+            self.vim.funcs.bufload(bufnr)
+        line_text = self.vim.api.buf_get_lines(bufnr, row-1, row, False)[0]
+        char_index = to_char_index(line_text, col-1)
+        col = char_index
+        row = row - 1
+        return row, col
 
     def apply_workspace_edits(self, changes):
         for file_path, changelist in changes.items():

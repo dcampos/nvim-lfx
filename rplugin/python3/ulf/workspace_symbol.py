@@ -2,7 +2,8 @@ from .ulf import ULFHandler
 from .core.protocol import Request, Point
 from .core.logging import debug
 from .core.url import uri_to_filename
-from .core.typing import Dict, List
+from .core.typing import Dict
+
 
 class WorkspaceSymbolHandler(ULFHandler):
 
@@ -12,32 +13,27 @@ class WorkspaceSymbolHandler(ULFHandler):
         if session and session.has_capability('workspaceSymbolProvider'):
             session.client.send_request(
                 Request.workspaceSymbol({'query': query}),
-                self._handle_response,
+                self.handle_response,
                 lambda res: debug(res))
         else:
             debug('Session is none for buffer={}'.format(bufnr))
 
-
-    def _handle_response(self, response) -> None:
-        def _parse_info(location) -> Dict:
-            point = Point.from_lsp(location['location']['range']['start'])
-            return { 'filename': uri_to_filename(location['location']['uri']),
-                    'lnum': point.row + 1, 'col': point.col + 1, 'text': location['name'] }
-
+    def handle_response(self, response) -> None:
         if not response:
             self.ulf.editor.error_message('No symbol found!')
             return
 
-        locations = list(map(_parse_info, response))
+        self.vim.async_call(self._display_locations, response)
 
-        self.vim.async_call(self._display_locations, locations)
+    def _display_locations(self, response):
+        def parse_info(location) -> Dict:
+            file_name = uri_to_filename(location['location']['uri'])
+            point = Point.from_lsp(location['location']['range']['start'])
+            row, col = self.ulf.editor.adjust_from_lsp(file_name, point.row, point.col)
+            return {'filename': file_name,
+                    'lnum': row, 'col': col, 'text': location['name']}
 
+        locations = list(map(parse_info, response))
 
-    def _goto(self, file, line, col=1):
-        self.vim.command('edit {}'.format(file))
-        self.vim.command('call cursor({}, {})'.format(line, col))
-
-
-    def _display_locations(self, locations: List):
         self.vim.call('setqflist', locations)
         self.vim.command('copen')
