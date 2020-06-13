@@ -89,6 +89,9 @@ class ULF:
     def _on_attach(self, view: VimView) -> None:
         debug('attached buffer %d' % view.buffer_id())
         self.vim.call('ulf#attach_buffer', view.buffer_id())
+        self.vim.vars['ulf#attached_bufnr'] = view.buffer_id()
+        self.vim.command('doautocmd <nomodeline> User ULFAttachBuffer')
+        del self.vim.vars['ulf#attached_bufnr']
 
     def _on_detach(self, view: VimView) -> None:
         pass
@@ -149,6 +152,18 @@ class ULF:
     def goto_definition(self, args):
         from .goto import GotoHandler
         handler = GotoHandler(self, self.vim)
+        handler.run()
+
+    @pynvim.function('ULF_goto_type_definition')
+    def goto_type_definition(self, args):
+        from .goto import GotoHandler
+        handler = GotoHandler(self, self.vim, 'typeDefinition')
+        handler.run()
+
+    @pynvim.function('ULF_goto_implementation')
+    def goto_implementation(self, args):
+        from .goto import GotoHandler
+        handler = GotoHandler(self, self.vim, 'implementation')
         handler.run()
 
     @pynvim.function('ULF_workspace_symbol')
@@ -217,19 +232,15 @@ class ULF:
                 config['languages'].append({'languageId': filetype})
         self.client_configs.update({'clients': configs})
 
-    def session_for_view(self, view: VimView):
-        for config in self.client_configs.all:
-            for language in config.languages:
-                if language.id == view.language_id():
-                    return self.manager.get_session(config.name, view.file_name())
-        return None
+    def session_for_view(self, view: VimView, capability: str = None):
+        return next(self.sessions_for_view(view, capability), None)
 
-    def sessions_for_view(self, view: VimView, capability: None) -> List[Session]:
+    def sessions_for_view(self, view: VimView, capability: str = None) -> List[Session]:
         for config in self.client_configs.all:
             for language in config.languages:
                 if language.id == view.language_id():
                     session = self.manager.get_session(config.name, view.file_name())
-                    if not capability or session.has_capability(capability):
+                    if session and (not capability or session.has_capability(capability)):
                         yield session
 
     def _session_for_buffer(self, bufnr) -> Session:

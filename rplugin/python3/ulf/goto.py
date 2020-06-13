@@ -18,15 +18,17 @@ class GotoHandler(ULFHandler):
     def run(self) -> None:
         view = self.current_view()
         point = self.cursor_point()
-        session = self.ulf.session_for_view(view)
-        if session is not None and session.has_capability(self.goto_kind + 'Provider'):
+        capability = self.goto_kind + 'Provider'
+        session = self.ulf.session_for_view(view, capability)
+        if session:
             request_type = getattr(Request, self.goto_kind)
             session.client.send_request(
                 request_type(text_document_position_params(view, point)),
                 self._handle_response,
                 lambda res: debug(res))
         else:
-            debug('Session is none for buffer={}'.format(view.buffer_id()))
+            debug('Session is none for buffer={} and {}'.format(view.buffer_id(), capability))
+            self.ulf.editor.error_message("Not available!")
 
     def _handle_response(self, response) -> None:
         def process_response_list(responses: list) -> List[Tuple[str, str, Tuple[int, int]]]:

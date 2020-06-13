@@ -9,7 +9,7 @@ from pynvim import Nvim
 from pynvim.api import Buffer
 from threading import Timer
 
-TAG = '[LSP]'
+TAG = '[ULF]'
 
 
 class VimEditor(Editor):
@@ -27,6 +27,9 @@ class VimEditor(Editor):
 
     def status_message(self, message: str) -> None:
         self.vim.async_call(self.vim.out_write, "{} {}\n".format(TAG, message))
+
+    def error_message(self, message: str) -> None:
+        self.vim.async_call(self.vim.err_write, "{} {}\n".format(TAG, message))
 
     def ok_cancel_dialog(self, msg: str, ok_title: str = None) -> str:
         raise NotImplementedError()

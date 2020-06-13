@@ -25,7 +25,7 @@ class WorkspaceSymbolHandler(ULFHandler):
                     'lnum': point.row + 1, 'col': point.col + 1, 'text': location['name'] }
 
         if not response:
-            self.vim.async_call(self.vim.err_write, 'No symbol found!\n')
+            self.ulf.editor.error_message('No symbol found!')
             return
 
         locations = list(map(_parse_info, response))
@@ -41,4 +41,3 @@ class WorkspaceSymbolHandler(ULFHandler):
     def _display_locations(self, locations: List):
         self.vim.call('setqflist', locations)
         self.vim.command('copen')
-

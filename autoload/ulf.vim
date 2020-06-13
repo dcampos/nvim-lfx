@@ -11,6 +11,8 @@ function! ulf#enable() abort
     command! ULFHover call ULF_hover()
     command! ULFSignatureHelp call ULF_signature_help()
     command! ULFGotoDefinition call ULF_goto_definition()
+    command! ULFGotoTypeDefinition call ULF_goto_type_definition()
+    command! ULFGotoImplementation call ULF_goto_implementation()
     command! -nargs=1 ULFWorkspaceSymbol call ULF_workspace_symbol(<q-args>)
     command! ULFReferences call ULF_references()
     command! ULFRename call s:request_rename()
