@@ -1,4 +1,4 @@
-from .core.typing import Callable, List, Optional, Any, Dict, Generator
+from .core.typing import Callable, List, Optional, Any, Dict, Iterator
 from .core.editor import Editor, Window, View
 from .core.sessions import Session
 from .core.logging import debug
@@ -226,8 +226,8 @@ class VimView(View):
         if options:
             self.vim.async_call(show_and_handle)
 
-    def available_sessions(self, capability: str = None) -> Generator[Session]:
-        return self.editor.ulf.sessions_for_view(self, capability)
+    def available_sessions(self, capability: str = None) -> Iterator[Session]:
+        yield from self.editor.ulf.sessions_for_view(self, capability)
 
     def diagnostics(self) -> Dict[str, List[Diagnostic]]:
         diagnostics = self.editor.ulf.diagnostics.get()

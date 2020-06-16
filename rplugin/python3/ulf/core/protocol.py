@@ -294,7 +294,7 @@ class Notification:
 
     @classmethod
     def initialized(cls) -> 'Notification':
-        return Notification(NotificationMethod.INITIALIZED)
+        return Notification(NotificationMethod.INITIALIZED, {})
 
     @classmethod
     def didOpen(cls, params: dict) -> 'Notification':

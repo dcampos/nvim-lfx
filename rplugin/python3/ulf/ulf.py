@@ -5,7 +5,7 @@ import abc
 import sys
 from pynvim import Nvim
 
-from .core.typing import Dict, List, Callable, Optional, Any, Generator
+from .core.typing import Dict, List, Callable, Optional, Any, Iterator
 from .core.settings import settings, ClientConfigs, ClientConfig
 from .core.sessions import create_session, Session
 from .core.protocol import WorkspaceFolder, Point, Range, RequestMethod
@@ -179,7 +179,7 @@ class ULF:
 
     @pynvim.function('ULF_complete_sync', sync=True)
     def complete_sync(self, args: List[Dict[str, Any]] = [{}]):
-        self.send_request(RequestMethod.COMPLETION, args, sync=True)  # TODO: make sync
+        self.send_request(RequestMethod.COMPLETION, args, sync=True)
 
     @pynvim.function('ULF_show_diagnostics')
     def show_diagnostics(self, args):
@@ -212,7 +212,7 @@ class ULF:
     def session_for_view(self, view: VimView, capability: str = None) -> Optional[Session]:
         return next(self.sessions_for_view(view, capability), None)
 
-    def sessions_for_view(self, view: VimView, capability: str = None) -> Generator[Session]:
+    def sessions_for_view(self, view: VimView, capability: str = None) -> Iterator[Session]:
         for config in self.client_configs.all:
             for language in config.languages:
                 if language.id == view.language_id():
