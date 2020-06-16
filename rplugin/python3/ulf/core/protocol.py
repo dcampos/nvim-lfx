@@ -86,6 +86,30 @@ class DocumentHighlightKind(object):
     Write = 3
 
 
+class RequestMethod(object):
+    INITIALIZE = "initialize"
+    HOVER = "textDocument/hover"
+    COMPLETION = "textDocument/completion"
+    SIGNATURE_HELP = "textDocument/signatureHelp"
+    REFERENCES = "textDocument/references"
+    DEFINITION = "textDocument/definition"
+    TYPE_DEFINITION = "textDocument/typeDefinition"
+    DECLARATION = "textDocument/declaration"
+    IMPLEMENTATION = "textDocument/implementation"
+    RENAME = "textDocument/rename"
+    CODE_ACTION = "textDocument/codeAction"
+    DOCUMENT_COLOR = "textDocument/documentColor"
+    EXECUTE_COMMAND = "workspace/executeCommand"
+    WORKSPACE_SYMBOL = "workspace/symbol"
+    FORMATTING = "textDocument/formatting"
+    WILL_SAVE_WAIT_UNTIL = "textDocument/willSaveWaitUntil"
+    RANGE_FORMATTING = "textDocument/rangeFormatting"
+    DOCUMENT_SYMBOL = "textDocument/documentSymbol"
+    DOCUMENT_HIGHLIGHT = "textDocument/documentHighlight"
+    RESOLVE = "completionItem/resolve"
+    SHUTDOWN = "shutdown"
+
+
 class Request:
 
     __slots__ = ('method', 'params')
@@ -100,83 +124,83 @@ class Request:
 
     @classmethod
     def hover(cls, params: dict) -> 'Request':
-        return Request("textDocument/hover", params)
+        return Request(RequestMethod.HOVER, params)
 
     @classmethod
     def complete(cls, params: dict) -> 'Request':
-        return Request("textDocument/completion", params)
+        return Request(RequestMethod.COMPLETION, params)
 
     @classmethod
     def signatureHelp(cls, params: dict) -> 'Request':
-        return Request("textDocument/signatureHelp", params)
+        return Request(RequestMethod.SIGNATURE_HELP, params)
 
     @classmethod
     def references(cls, params: dict) -> 'Request':
-        return Request("textDocument/references", params)
+        return Request(RequestMethod.REFERENCES, params)
 
     @classmethod
     def definition(cls, params: dict) -> 'Request':
-        return Request("textDocument/definition", params)
+        return Request(RequestMethod.DEFINITION, params)
 
     @classmethod
     def typeDefinition(cls, params: dict) -> 'Request':
-        return Request("textDocument/typeDefinition", params)
+        return Request(RequestMethod.TYPE_DEFINITION, params)
 
     @classmethod
     def declaration(cls, params: dict) -> 'Request':
-        return Request("textDocument/declaration", params)
+        return Request(RequestMethod.DECLARATION, params)
 
     @classmethod
     def implementation(cls, params: dict) -> 'Request':
-        return Request("textDocument/implementation", params)
+        return Request(RequestMethod.IMPLEMENTATION, params)
 
     @classmethod
     def rename(cls, params: dict) -> 'Request':
-        return Request("textDocument/rename", params)
+        return Request(RequestMethod.RENAME, params)
 
     @classmethod
     def codeAction(cls, params: dict) -> 'Request':
-        return Request("textDocument/codeAction", params)
+        return Request(RequestMethod.CODE_ACTION, params)
 
     @classmethod
     def documentColor(cls, params: dict) -> 'Request':
-        return Request('textDocument/documentColor', params)
+        return Request(RequestMethod.DOCUMENT_COLOR, params)
 
     @classmethod
     def executeCommand(cls, params: Mapping[str, Any]) -> 'Request':
-        return Request("workspace/executeCommand", params)
+        return Request(RequestMethod.EXECUTE_COMMAND, params)
 
     @classmethod
     def workspaceSymbol(cls, params: dict) -> 'Request':
-        return Request("workspace/symbol", params)
+        return Request(RequestMethod.WORKSPACE_SYMBOL, params)
 
     @classmethod
     def formatting(cls, params: dict) -> 'Request':
-        return Request("textDocument/formatting", params)
+        return Request(RequestMethod.FORMATTING, params)
 
     @classmethod
     def willSaveWaitUntil(cls, params: dict) -> 'Request':
-        return Request("textDocument/willSaveWaitUntil", params)
+        return Request(RequestMethod.WILL_SAVE_WAIT_UNTIL, params)
 
     @classmethod
     def rangeFormatting(cls, params: dict) -> 'Request':
-        return Request("textDocument/rangeFormatting", params)
+        return Request(RequestMethod.RANGE_FORMATTING, params)
 
     @classmethod
     def documentSymbols(cls, params: dict) -> 'Request':
-        return Request("textDocument/documentSymbol", params)
+        return Request(RequestMethod.DOCUMENT_SYMBOL, params)
 
     @classmethod
     def documentHighlight(cls, params: dict) -> 'Request':
-        return Request("textDocument/documentHighlight", params)
+        return Request(RequestMethod.DOCUMENT_HIGHLIGHT, params)
 
     @classmethod
     def resolveCompletionItem(cls, params: dict) -> 'Request':
-        return Request("completionItem/resolve", params)
+        return Request(RequestMethod.RESOLVE, params)
 
     @classmethod
     def shutdown(cls) -> 'Request':
-        return Request("shutdown")
+        return Request(RequestMethod.SHUTDOWN)
 
     def __repr__(self) -> str:
         return self.method + " " + str(self.params)
@@ -248,6 +272,18 @@ class Response:
         return r
 
 
+class NotificationMethod(object):
+    INITIALIZED = "initialized"
+    DID_OPEN = "textDocument/didOpen"
+    DID_CHANGE = "textDocument/didChange"
+    WILL_SAVE = "textDocument/willSave"
+    DID_SAVE = "textDocument/didSave"
+    DID_CLOSE = "textDocument/didClose"
+    DID_CHANGE_CONFIGURATION = "workspace/didChangeConfiguration"
+    DID_CHANGE_WORKSPACE_FOLDERS = "workspace/didChangeWorkspaceFolders"
+    EXIT = "exit"
+
+
 class Notification:
 
     __slots__ = ('method', 'params')
@@ -258,35 +294,35 @@ class Notification:
 
     @classmethod
     def initialized(cls) -> 'Notification':
-        return Notification("initialized", {})
+        return Notification(NotificationMethod.INITIALIZED)
 
     @classmethod
     def didOpen(cls, params: dict) -> 'Notification':
-        return Notification("textDocument/didOpen", params)
+        return Notification(NotificationMethod.DID_OPEN, params)
 
     @classmethod
     def didChange(cls, params: dict) -> 'Notification':
-        return Notification("textDocument/didChange", params)
+        return Notification(NotificationMethod.DID_CHANGE, params)
 
     @classmethod
     def willSave(cls, params: dict) -> 'Notification':
-        return Notification("textDocument/willSave", params)
+        return Notification(NotificationMethod.WILL_SAVE, params)
 
     @classmethod
     def didSave(cls, params: dict) -> 'Notification':
-        return Notification("textDocument/didSave", params)
+        return Notification(NotificationMethod.DID_SAVE, params)
 
     @classmethod
     def didClose(cls, params: dict) -> 'Notification':
-        return Notification("textDocument/didClose", params)
+        return Notification(NotificationMethod.DID_CLOSE, params)
 
     @classmethod
     def didChangeConfiguration(cls, params: dict) -> 'Notification':
-        return Notification("workspace/didChangeConfiguration", params)
+        return Notification(NotificationMethod.DID_CHANGE_CONFIGURATION, params)
 
     @classmethod
     def didChangeWorkspaceFolders(cls, params: dict) -> 'Notification':
-        return Notification("workspace/didChangeWorkspaceFolders", params)
+        return Notification(NotificationMethod.DID_CHANGE_WORKSPACE_FOLDERS, params)
 
     @classmethod
     def exit(cls) -> 'Notification':

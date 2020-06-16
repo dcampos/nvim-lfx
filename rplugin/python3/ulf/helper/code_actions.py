@@ -1,12 +1,12 @@
-from .ulf import ULFHandler
-from .editor import VimView
-from .core.edit import parse_workspace_edit
-from .core.protocol import Diagnostic
-from .core.protocol import Request, Point, Range
-from .core.typing import Any, List, Dict, Callable, Optional, Union, Tuple, Mapping, TypedDict
-from .core.url import filename_to_uri
+from ..ulf import RequestHelper
+from ..editor import VimView
+from ..core.edit import parse_workspace_edit
+from ..core.protocol import Diagnostic
+from ..core.protocol import Request, RequestMethod, Point, Range
+from ..core.typing import Any, List, Dict, Callable, Optional, Union, Tuple, Mapping, TypedDict
+from ..core.url import filename_to_uri
 # from .core.logging import debug
-from .diagnostics import filter_by_point, view_diagnostics
+from ..diagnostics import filter_by_point, view_diagnostics
 
 CodeActionOrCommand = TypedDict('CodeActionOrCommand', {
     'title': str,
@@ -168,17 +168,16 @@ def run_code_action_or_command(view: VimView, config_name: str,
             execute_server_command(view, config_name, maybe_command)
 
 
-class CodeActionsHandler(ULFHandler):
+class CodeActionsHelper(RequestHelper, method=RequestMethod.CODE_ACTION):
 
-    def __init__(self, ulf, vim, visual: bool = False) -> None:
+    def __init__(self, ulf, vim) -> None:
         super().__init__(ulf, vim)
-        self._visual = visual
 
-    def run(self) -> None:
+    def run(self, visual: bool = False) -> None:
         self.view = self.current_view()  # type: VimView
         self.commands = []  # type: List[Tuple[str, str, CodeActionOrCommand]]
         self.commands_by_config = {}  # type: CodeActionsByConfigName
-        if self._visual:
+        if visual:
             actions_manager.request(self.view, self.selection_range(), self.handle_responses)
         else:  # No selection
             actions_manager.request(self.view, self.cursor_point(), self.handle_responses)

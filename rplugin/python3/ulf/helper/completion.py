@@ -1,35 +1,43 @@
-from .ulf import ULFHandler
-from .core.typing import Dict, Any
-from .core.protocol import Request
-from .core.logging import debug
-from .core.views import text_document_position_params
-from .core.completion import parse_completion_response, completion_item_kind_names
+from ..ulf import RequestHelper
+from ..core.typing import Dict, Any
+from ..core.protocol import Request, RequestMethod
+from ..core.logging import debug
+from ..core.views import text_document_position_params
+from ..core.completion import parse_completion_response, completion_item_kind_names
 
 
-class CompletionHandler(ULFHandler):
+class CompletionHelper(RequestHelper, method=RequestMethod.COMPLETION):
 
-    def __init__(self, ulf, vim, params: Dict[str, Any], sync=False):
+    def __init__(self, ulf, vim):
         super().__init__(ulf, vim)
-        self.params = params
-        self.sync = sync
 
-    def run(self) -> None:
+    def run(self, params: Dict[str, Any]) -> None:
+        # TODO: make reusable
+        self.params = params
+        self.sync = False
         view = self.current_view()
         point = self.cursor_point()
-        session = self.ulf._session_for_buffer(view.buffer_id())
-        if session and session.has_capability('completionProvider'):
+        session = self.ulf.session_for_view(view, 'completionProvider')
+        if session:
+            self.ulf.documents.purge_changes(view)
+            session.client.send_request(
+                Request.complete(text_document_position_params(view, point)),
+                self.handle_response,
+                lambda res: debug(res))
+
+    def run_sync(self, params) -> None:
+        self.params = params
+        self.sync = False
+        view = self.current_view()
+        point = self.cursor_point()
+        session = self.ulf.session_for_view(view, 'completionProvider')
+        if session:
             # Ensure all changes are committed
             self.ulf.documents.purge_changes(view)
-            if self.sync:
-                session.client.execute_request(
-                    Request.complete(text_document_position_params(view, point)),
-                    self.handle_response,
-                    lambda res: debug(res))
-            else:
-                session.client.send_request(
-                    Request.complete(text_document_position_params(view, point)),
-                    self.handle_response,
-                    lambda res: debug(res))
+            session.client.execute_request(
+                Request.complete(text_document_position_params(view, point)),
+                self.handle_response,
+                lambda res: debug(res))
 
     def handle_response(self, response) -> None:
         if not response:
@@ -63,7 +71,7 @@ class CompletionHandler(ULFHandler):
         try:
             target = self.params.get('target')
             self.vim.vars[target] = self.matches
-        except:
+        except Exception:
             pass
 
         try:
@@ -74,5 +82,5 @@ class CompletionHandler(ULFHandler):
                 self.vim.call(callback, self.matches)
             else:
                 self.vim.call(callback)
-        except:
+        except Exception:
             pass

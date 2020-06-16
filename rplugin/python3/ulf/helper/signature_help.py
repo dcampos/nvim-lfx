@@ -1,21 +1,18 @@
-from .ulf import ULFHandler
-from .core.protocol import Request
-from .core.logging import debug
-from .core.signature_help import create_signature_help
-from .core.views import text_document_position_params
-from .editor import VimView
-from .core.protocol import Point
+from ..ulf import RequestHelper
+from ..core.protocol import Request, RequestMethod
+from ..core.logging import debug
+from ..core.signature_help import create_signature_help
+from ..core.views import text_document_position_params
 
 
-class SignatureHelpHandler(ULFHandler):
+class SignatureHelpHelper(RequestHelper, method=RequestMethod.SIGNATURE_HELP):
 
     def run(self) -> None:
         bufnr = self.vim.current.buffer.number
-        cursor = self.vim.current.window.cursor
-        view = VimView(self.ulf.window, bufnr)
+        view = self.current_view()
+        point = self.cursor_point()
         self.ulf.documents.purge_changes(view)
-        point = Point(cursor[0] - 1, cursor[1])
-        session = self.ulf._session_for_buffer(bufnr)
+        session = self.ulf.session_for_view(view, 'signatureHelpProvider')
         if session is not None:
             session.client.send_request(
                 Request.signatureHelp(text_document_position_params(view, point)),
@@ -40,4 +37,3 @@ class SignatureHelpHandler(ULFHandler):
                 cmd.append('echon "{}" |'.format(parameter.label))
         self.vim.async_call(self.vim.command,
                             'echo "" | echon "(" | {} echon ")"'.format(' echon ", " | '.join(cmd)))
-

@@ -1,22 +1,22 @@
-from .ulf import ULFHandler
-from .core.protocol import Request, Point
-from .core.logging import debug
-from .core.url import uri_to_filename
-from .core.typing import Dict
+from ..ulf import RequestHelper
+from ..core.protocol import Request, RequestMethod, Point
+from ..core.logging import debug
+from ..core.url import uri_to_filename
+from ..core.typing import Dict
 
 
-class WorkspaceSymbolHandler(ULFHandler):
+class WorkspaceSymbolHelper(RequestHelper, method=RequestMethod.WORKSPACE_SYMBOL):
 
     def run(self, query: str) -> None:
-        bufnr = self.vim.current.buffer.number
-        session = self.ulf._session_for_buffer(bufnr)
+        view = self.current_view()
+        session = self.ulf.session_for_view(view)
         if session and session.has_capability('workspaceSymbolProvider'):
             session.client.send_request(
                 Request.workspaceSymbol({'query': query}),
                 self.handle_response,
                 lambda res: debug(res))
         else:
-            debug('Session is none for buffer={}'.format(bufnr))
+            debug('Session is none for buffer={}'.format(view.buffer_id()))
 
     def handle_response(self, response) -> None:
         if not response:

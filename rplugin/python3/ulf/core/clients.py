@@ -3,17 +3,14 @@ from .sessions import create_session, Session
 from .settings import ClientConfig, settings
 from .typing import List, Dict, Tuple, Callable, Optional
 import os
-from .editor import Window, expand_variables
+from .editor import Window
 
 
 def get_window_env(window: Window, config: ClientConfig) -> Tuple[List[str], Dict[str, str]]:
 
-    # Create a dictionary of Sublime Text variables
-    variables = window.extract_variables()
-
     # Expand language server command line environment variables
     expanded_args = list(
-        expand_variables(os.path.expanduser(arg), variables)
+        os.path.expanduser(arg)
         for arg in config.binary_args
     )
 
@@ -21,7 +18,7 @@ def get_window_env(window: Window, config: ClientConfig) -> Tuple[List[str], Dic
     env = os.environ.copy()
     for var, value in config.env.items():
         # Expand both ST and OS environment variables
-        env[var] = os.path.expandvars(expand_variables(value, variables))
+        env[var] = os.path.expandvars(value)
 
     return expanded_args, env
 

@@ -1,10 +1,11 @@
-from .ulf import ULFHandler
-from .core.protocol import Request
-from .core.logging import debug
-from .core.views import text_document_position_params
+from ..ulf import RequestHelper
+from ..core.protocol import Request, RequestMethod
+from ..core.logging import debug
+from ..core.views import text_document_position_params
+from .goto import GotoDefinitionHelper
 
 
-class HoverHandler(ULFHandler):
+class HoverHelper(RequestHelper, method=RequestMethod.HOVER):
 
     def __init__(self, ulf, vim):
         super().__init__(ulf, vim)
@@ -12,7 +13,7 @@ class HoverHandler(ULFHandler):
     def run(self):
         view = self.current_view()
         point = self.cursor_point()
-        session = self.ulf._session_for_buffer(view.buffer_id())
+        session = self.ulf.session_for_view(view, 'hoverProvider')
         if session is not None:
             session.client.execute_request(
                 Request.hover(text_document_position_params(view, point)),
@@ -34,4 +35,3 @@ class HoverHandler(ULFHandler):
                 elif isinstance(content, dict):
                     result.append(content.get('value'))
             self.vim.command('echon "{}"'.format('\n\n'.join(result).replace('"', '\\"')))
-

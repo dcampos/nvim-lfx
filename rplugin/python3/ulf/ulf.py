@@ -2,12 +2,13 @@ import importlib
 import os.path
 import pynvim
 import abc
+import sys
 from pynvim import Nvim
 
-from .core.typing import Dict, List, Callable, Optional, Any
+from .core.typing import Dict, List, Callable, Optional, Any, Generator
 from .core.settings import settings, ClientConfigs, ClientConfig
 from .core.sessions import create_session, Session
-from .core.protocol import WorkspaceFolder, Point, Range
+from .core.protocol import WorkspaceFolder, Point, Range, RequestMethod
 from .core.logging import set_log_file, set_debug_logging, set_exception_logging, debug
 from .core.workspace import ProjectFolders
 from .core.diagnostics import DiagnosticsStorage
@@ -16,12 +17,6 @@ from .editor import VimEditor, VimWindow, VimView
 from .context import ContextManager, DummyLanguageHandlerDispatcher
 from .diagnostics import DiagnosticsPresenter
 from .util import to_char_index
-
-# from .hover import HoverHandler
-# from .signature_help import SignatureHelpHandler
-# from .goto import GotoHandler
-# from .workspace_symbol import WorkspaceSymbolHandler
-# from .completion import CompletionHandler
 
 
 @pynvim.plugin
@@ -81,8 +76,14 @@ class ULF:
             self.editor,
             DummyLanguageHandlerDispatcher())
 
-        import_handlers(self.vim.funcs.globpath(self.vim.options['runtimepath'],
-                                                'rplugin/python3/ulf/handler/*.py'))
+        import_helpers(self.vim.funcs.globpath(self.vim.options['runtimepath'],
+                                               'rplugin/python3/ulf/helper/*.py'))
+        # debug('helpers = %s' % _HELPERS)
+
+        # instances = RequestHelper.instantiate_all(self, vim)
+        # debug('instances = %s' % instances)
+
+        debug('_registry = %s' % RequestHelper._registry)
 
         self.vim.vars['ulf#_channel_id'] = self.vim.channel_id
 
@@ -138,73 +139,47 @@ class ULF:
 
     @pynvim.function('ULF_hover')
     def hover(self, args):
-        from .hover import HoverHandler
-        handler = HoverHandler(self, self.vim)
-        handler.run()
+        self.send_request(RequestMethod.HOVER, args)
 
     @pynvim.function('ULF_signature_help')
     def signature_help(self, args):
-        from .signature_help import SignatureHelpHandler
-        handler = SignatureHelpHandler(self, self.vim)
-        handler.run()
+        self.send_request(RequestMethod.SIGNATURE_HELP, args)
 
     @pynvim.function('ULF_goto_definition')
     def goto_definition(self, args):
-        from .goto import GotoHandler
-        handler = GotoHandler(self, self.vim)
-        handler.run()
+        self.send_request(RequestMethod.DEFINITION, args)
 
     @pynvim.function('ULF_goto_type_definition')
     def goto_type_definition(self, args):
-        from .goto import GotoHandler
-        handler = GotoHandler(self, self.vim, 'typeDefinition')
-        handler.run()
+        self.send_request(RequestMethod.TYPE_DEFINITION, args)
 
     @pynvim.function('ULF_goto_implementation')
     def goto_implementation(self, args):
-        from .goto import GotoHandler
-        handler = GotoHandler(self, self.vim, 'implementation')
-        handler.run()
+        self.send_request(RequestMethod.IMPLEMENTATION, args)
 
     @pynvim.function('ULF_workspace_symbol')
     def workspace_symbol(self, args):
-        from .workspace_symbol import WorkspaceSymbolHandler
-        handler = WorkspaceSymbolHandler(self, self.vim)
-        handler.run(args[0])
+        self.send_request(RequestMethod.WORKSPACE_SYMBOL, args)
 
     @pynvim.function('ULF_references')
     def references(self, args):
-        from .references import ReferencesHandler
-        handler = ReferencesHandler(self, self.vim)
-        handler.run()
+        self.send_request(RequestMethod.REFERENCES, args)
 
     @pynvim.function('ULF_rename')
     def rename(self, args):
-        new_name = args.pop()
-        from .rename import RenameHandler
-        handler = RenameHandler(self, self.vim, new_name)
-        handler.run()
+        self.send_request(RequestMethod.RENAME, args)
 
     @pynvim.function('ULF_code_actions')
     def code_actions(self, args: List[Dict[str, Any]] = [{}]):
-        visual = args.pop() if len(args) else False
-        from .code_actions import CodeActionsHandler
-        handler = CodeActionsHandler(self, self.vim, visual)
-        handler.run()
+        self.send_request(RequestMethod.CODE_ACTION, args)
 
     @pynvim.function('ULF_complete')
     def complete(self, args: List[Dict[str, Any]] = [{}]):
-        from .completion import CompletionHandler
-        params = args[0]
-        handler = CompletionHandler(self, self.vim, params)
-        handler.run()
+        self.send_request(RequestMethod.COMPLETION, args)
 
     @pynvim.function('ULF_complete_sync', sync=True)
     def complete_sync(self, args: List[Dict[str, Any]] = [{}]):
-        from .completion import CompletionHandler
-        params = args[0]
-        handler = CompletionHandler(self, self.vim, params, sync=True)
-        handler.run()
+        self.send_request(RequestMethod.COMPLETION, args, sync=True)  # TODO: make sync
 
     @pynvim.function('ULF_show_diagnostics')
     def show_diagnostics(self, args):
@@ -214,14 +189,16 @@ class ULF:
             self.diagnostics_presenter.show_all(view.file_name())
 
     @pynvim.function('ULF_send_request')
-    def send_request(self, args):
-        method, *params = args
-        handler = HANDLERS.get(method)
-        if handler:
-            instance = handler(self, self.vim)
-            instance.run()
+    def send_request(self, method, args, sync=False):
+        helper = RequestHelper.for_method(method)
+        if helper:
+            instance = helper(self, self.vim)
+            if sync:
+                instance.run_sync(*args)
+            else:
+                instance.run(*args)
         else:
-            debug('no handler found for method={}'.format(method))
+            debug('No helper found for method={}'.format(method))
 
     def _update_configs(self) -> None:
         configs = self.vim.vars.get('ulf#configs', {})
@@ -232,10 +209,10 @@ class ULF:
                 config['languages'].append({'languageId': filetype})
         self.client_configs.update({'clients': configs})
 
-    def session_for_view(self, view: VimView, capability: str = None):
+    def session_for_view(self, view: VimView, capability: str = None) -> Optional[Session]:
         return next(self.sessions_for_view(view, capability), None)
 
-    def sessions_for_view(self, view: VimView, capability: str = None) -> List[Session]:
+    def sessions_for_view(self, view: VimView, capability: str = None) -> Generator[Session]:
         for config in self.client_configs.all:
             for language in config.languages:
                 if language.id == view.language_id():
@@ -243,38 +220,35 @@ class ULF:
                     if session and (not capability or session.has_capability(capability)):
                         yield session
 
-    def _session_for_buffer(self, bufnr) -> Session:
-        view = self.window.view_for_buffer(int(bufnr))
-        return self.session_for_view(view)
 
-    def _error_handler(self, result):
-        self.vim.async_call(self.vim.err_write, result)
-
-# import functools
+_HELPERS: Dict[str, Any] = {}
 
 
-HANDLERS: Dict[str, Any] = {}
+def _helper_exists(cls, lsp_method) -> bool:
+    helpers = _HELPERS.get(lsp_method)
+    cls_name = ".".join([cls.__module__, cls.__name__])
+    for helper in helpers:
+        helper_name = ".".join([helper.__module__, helper.__name__])
+        if helper_name == cls_name:
+            return True
+    return False
 
 
-def request_handler(method):
-    def request_decorator(func):
-        HANDLERS[method] = func
-        return func
-    return request_decorator
-
-
-def import_handlers(runtime: str) -> None:
+def import_helpers(runtime: str) -> None:
     paths: List[str] = runtime.split('\n')
+
     for p in paths:
         name = os.path.splitext(os.path.basename(p))[0]
-        module_name = 'ulf.handler.%s' % name
+        module_name = 'ulf.helper.%s' % name
         spec = importlib.util.spec_from_file_location(module_name, p)
+
         if spec:
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
 
 
-class ULFHandler(metaclass=abc.ABCMeta):
+class RequestHelper(metaclass=abc.ABCMeta):
+    _registry = {}
 
     def __init__(self, ulf: ULF, vim: Nvim):
         self.ulf = ulf
@@ -299,5 +273,17 @@ class ULFHandler(metaclass=abc.ABCMeta):
         col = to_char_index(line_text, col)
         return Point(row, col)
 
-    def run(self):
+    def run(self, *args, **kwargs):
         raise NotImplementedError()
+
+    def run_sync(self, *args, **kwargs):
+        raise NotImplementedError()
+
+    @classmethod
+    def for_method(cls, method: str):
+        helper = cls._registry.get(method)
+        return helper
+
+    def __init_subclass__(cls, method=None, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls._registry[method] = cls
