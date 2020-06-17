@@ -2,7 +2,6 @@ import importlib
 import os.path
 import pynvim
 import abc
-import sys
 from pynvim import Nvim
 
 from .core.typing import Dict, List, Callable, Optional, Any, Iterator
