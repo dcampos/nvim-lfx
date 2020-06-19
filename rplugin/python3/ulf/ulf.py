@@ -59,7 +59,7 @@ class ULF:
                 settings=settings,
                 on_pre_initialize=on_pre_initialize,
                 on_post_initialize=lambda session: self.vim.async_call(on_post_initialize, session),
-                on_post_exit=lambda config_name: debug('session ended: ' + config_name),
+                on_post_exit=on_post_exit,
                 on_stderr_log=on_stderr_log)
 
         import_helpers(self.vim.funcs.globpath(self.vim.options['runtimepath'],
@@ -302,6 +302,9 @@ class ClientHelper(metaclass=abc.ABCMeta):
     def on_initialized(self, config_name: str, window: VimWindow, client: Client) -> None:
         pass
 
+    def on_exited(self, config_name: str, window: VimWindow) -> None:
+        pass
+
     @classmethod
     def for_name(cls, config_name: str = None) -> 'List[ClientHelper]':
         try:
@@ -345,6 +348,11 @@ class ClientHelperDispacher(object):
         for helper in helpers:
             helper.on_initialized(config_name, window, client)
 
+    def on_exited(self, config_name: str, window: VimWindow) -> None:
+        helpers = self._helper_instances(config_name)
+        for helper in helpers:
+            helper.on_exited(config_name, window)
+
 
 class DiagnosticsHelper(ClientHelper):
 
@@ -352,3 +360,10 @@ class DiagnosticsHelper(ClientHelper):
         client.on_notification(
             "textDocument/publishDiagnostics",
             lambda params: self.ulf.diagnostics.receive(config_name, params))
+
+    def on_exited(self, config_name: str, window: VimWindow) -> None:
+        debug('on_exited called: %s' % config_name)
+        for view in window.views():
+            file_name = view.file_name()
+            if file_name:
+                self.diagnostics.remove(file_name, config_name)

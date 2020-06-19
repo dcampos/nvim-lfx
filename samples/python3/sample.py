@@ -10,12 +10,12 @@ class Parent(abc.ABC):
 class Child(Parent):
     pass
 
-def hello(name: str = "João", greeting: str = "Hello"):
+def hello(name: str = "João", greeting: str = "Hello", foo: str = ...):
     print('foo')
     foo = 123
     print("{}, {}!".format(greeting, name))
 
 hello("You", "Hi")
 
-child = Child()
-child.foo()
+#child = Child()
+#child.foo()

@@ -1,6 +1,7 @@
 from .core.typing import List, Dict, Any, Callable, Optional
 from .core.types import WindowLike, ViewLike, ClientStates, ConfigRegistry
-from .core.workspace import ProjectFolders, get_workspace_folders, enable_in_project, disable_in_project, sorted_workspace_folders
+from .core.workspace import (ProjectFolders, get_workspace_folders, enable_in_project,
+                             disable_in_project, sorted_workspace_folders)
 from .core.settings import Settings
 from .core.configurations import ClientConfig
 from .core.diagnostics import DiagnosticsStorage
@@ -315,10 +316,6 @@ class ContextManager(object):
 
     def _handle_post_exit(self, config_name: str) -> None:
         self.documents.remove_session(config_name)
-        for view in self._window.views():
-            file_name = view.file_name()
-            if file_name:
-                self.diagnostics.remove(file_name, config_name)
 
         if not self._sessions:
             self._handle_all_sessions_ended()

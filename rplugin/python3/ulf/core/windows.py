@@ -13,6 +13,9 @@ class LanguageHandlerListener(Protocol):
     def on_initialized(self, config_name: str, window: WindowLike, client: Client) -> None:
         ...
 
+    def on_exited(self, config_name: str, window: WindowLike) -> None:
+        ...
+
 
 class DocumentHandler(Protocol):
     def add_session(self, session: Session) -> None:
