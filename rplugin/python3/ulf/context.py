@@ -15,15 +15,6 @@ from .editor import VimEditor
 import threading
 
 
-class DummyLanguageHandlerDispatcher(object):
-
-    def on_start(self, config_name: str, window: WindowLike) -> bool:
-        return True
-
-    def on_initialized(self, config_name: str, window: WindowLike, client: Client) -> None:
-        pass
-
-
 class ContextManager(object):
     def __init__(
         self,
@@ -173,14 +164,15 @@ class ContextManager(object):
                 for config in startable_configs:
 
                     debug("window {} requests {} for {}".format(self._window.id(), config.name, file_path))
-                    self._start_client(config, file_path)
+                    self._start_client(config, view)
 
-    def _start_client(self, config: ClientConfig, file_path: str) -> None:
+    def _start_client(self, config: ClientConfig, view: ViewLike) -> None:
+        file_path = view.file_name()
         if not self._can_start_config(config.name, file_path):
             debug('Already starting on this window:', config.name)
             return
 
-        if not self._handlers.on_start(config.name, self._window):
+        if not self._handlers.setup(config.name, self._window, view):
             return
 
         self._window.status_message("Starting " + config.name + "...")
@@ -281,10 +273,6 @@ class ContextManager(object):
             "workspace/applyEdit",
             lambda params, request_id: self._apply_workspace_edit(params, session.client, request_id))
 
-        session.on_notification(
-            "textDocument/publishDiagnostics",
-            lambda params: self.diagnostics.receive(session.config.name, params))
-
         self._handlers.on_initialized(session.config.name, self._window, session.client)
 
         session.client.send_notification(Notification.initialized())
@@ -327,13 +315,11 @@ class ContextManager(object):
 
     def _handle_post_exit(self, config_name: str) -> None:
         self.documents.remove_session(config_name)
-        debug('views: {}'.format(self._window.views()))
         for view in self._window.views():
             file_name = view.file_name()
             if file_name:
                 self.diagnostics.remove(file_name, config_name)
 
-        debug("session", config_name, "ended")
         if not self._sessions:
             self._handle_all_sessions_ended()
 

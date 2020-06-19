@@ -31,7 +31,7 @@ class DiagnosticsPresenter(object):
         pass
 
     def update(self, file_path: str, config_name: str, diagnostics: Dict[str, Dict[str, List[Diagnostic]]]) -> None:
-        debug("received diagnostics: {}".format(diagnostics));
+        debug("received diagnostics: {}".format(diagnostics))
         self._diagnostics = diagnostics
         self._received_diagnostics_after_change = True
 

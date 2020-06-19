@@ -11,9 +11,10 @@ from .core.protocol import WorkspaceFolder, Point, Range, RequestMethod
 from .core.logging import set_log_file, set_debug_logging, set_exception_logging, debug
 from .core.workspace import ProjectFolders
 from .core.diagnostics import DiagnosticsStorage
+from .core.rpc import Client
 from .documents import VimDocumentHandler, VimConfigManager
 from .editor import VimEditor, VimWindow, VimView
-from .context import ContextManager, DummyLanguageHandlerDispatcher
+from .context import ContextManager
 from .diagnostics import DiagnosticsPresenter
 from .util import to_char_index
 
@@ -61,6 +62,9 @@ class ULF:
                 on_post_exit=lambda config_name: debug('session ended: ' + config_name),
                 on_stderr_log=on_stderr_log)
 
+        import_helpers(self.vim.funcs.globpath(self.vim.options['runtimepath'],
+                                               'rplugin/python3/ulf/helper/*.py'))
+
         self.diagnostics_presenter = DiagnosticsPresenter(self.window, self.documents)
         self.diagnostics = DiagnosticsStorage(self.diagnostics_presenter)
 
@@ -73,16 +77,12 @@ class ULF:
             self.diagnostics,
             start_session,
             self.editor,
-            DummyLanguageHandlerDispatcher())
+            ClientHelperDispacher(self, self.vim))
 
-        import_helpers(self.vim.funcs.globpath(self.vim.options['runtimepath'],
-                                               'rplugin/python3/ulf/helper/*.py'))
         # debug('helpers = %s' % _HELPERS)
 
         # instances = RequestHelper.instantiate_all(self, vim)
         # debug('instances = %s' % instances)
-
-        debug('_registry = %s' % RequestHelper._registry)
 
         self.vim.vars['ulf#_channel_id'] = self.vim.channel_id
 
@@ -286,3 +286,69 @@ class RequestHelper(metaclass=abc.ABCMeta):
     def __init_subclass__(cls, method=None, **kwargs):
         super().__init_subclass__(**kwargs)
         cls._registry[method] = cls
+
+
+class ClientHelper(metaclass=abc.ABCMeta):
+    _registry_by_name: Dict[str, Any] = {}
+    _registry_generic: List[Any] = []
+
+    def __init__(self, ulf, vim):
+        self.ulf = ulf
+        self.vim = vim
+
+    def setup(self, config_name: str, window: VimWindow, view: VimView) -> bool:
+        return True
+
+    def on_initialized(self, config_name: str, window: VimWindow, client: Client) -> None:
+        pass
+
+    @classmethod
+    def for_name(cls, config_name: str = None) -> 'List[ClientHelper]':
+        try:
+            return [cls._registry_by_name[config_name]] + cls._registry_generic
+        except KeyError:
+            return cls._registry_generic
+
+    @classmethod
+    def instance(cls, ulf, vim, *args, **kwargs) -> 'ClientHelper':
+        try:
+            return cls._instance
+        except AttributeError:
+            cls._instance = cls(ulf, vim, *args, **kwargs)
+            return cls._instance
+
+    def __init_subclass__(cls, config_name=None, **kwargs):
+        super().__init_subclass__(**kwargs)
+        if config_name:
+            cls._registry_by_name[config_name] = cls
+        else:
+            cls._registry_generic.append(cls)
+
+
+class ClientHelperDispacher(object):
+
+    def __init__(self, ulf, vim):
+        self.ulf = ulf
+        self.vim = vim
+
+    def _helper_instances(self, config_name) -> List[ClientHelper]:
+        return list(map(lambda cls: cls.instance(self.ulf, self.vim),
+                        ClientHelper.for_name(config_name)))
+
+    def setup(self, config_name: str, window: VimWindow, view: VimView) -> bool:
+        helpers = self._helper_instances(config_name)
+        return all(helper.setup(config_name, window, view)
+                   for helper in helpers) if helpers else True
+
+    def on_initialized(self, config_name: str, window: VimWindow, client: Client) -> None:
+        helpers = self._helper_instances(config_name)
+        for helper in helpers:
+            helper.on_initialized(config_name, window, client)
+
+
+class DiagnosticsHelper(ClientHelper):
+
+    def on_initialized(self, config_name: str, window: VimWindow, client: Client) -> None:
+        client.on_notification(
+            "textDocument/publishDiagnostics",
+            lambda params: self.ulf.diagnostics.receive(config_name, params))

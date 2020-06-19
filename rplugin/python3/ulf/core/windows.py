@@ -7,7 +7,7 @@ from .typing import Any, Protocol
 
 class LanguageHandlerListener(Protocol):
 
-    def on_start(self, config_name: str, window: WindowLike) -> bool:
+    def setup(self, config_name: str, window: WindowLike, view: ViewLike) -> bool:
         ...
 
     def on_initialized(self, config_name: str, window: WindowLike, client: Client) -> None:
