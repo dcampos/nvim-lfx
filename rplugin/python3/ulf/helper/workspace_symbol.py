@@ -30,6 +30,8 @@ class WorkspaceSymbolHelper(RequestHelper, method=RequestMethod.WORKSPACE_SYMBOL
             file_name = uri_to_filename(location['location']['uri'])
             point = Point.from_lsp(location['location']['range']['start'])
             row, col = self.ulf.editor.adjust_from_lsp(file_name, point.row, point.col)
+            row += 1
+            col += 1
             return {'filename': file_name,
                     'lnum': row, 'col': col, 'text': location['name']}
 

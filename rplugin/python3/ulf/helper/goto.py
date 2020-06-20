@@ -49,6 +49,8 @@ class GotoDefinitionHelper(RequestHelper, method=RequestMethod.DEFINITION):
                 file_path = uri_to_filename(response["uri"])
                 start = Point.from_lsp(response["range"]["start"])
             row, col = self.ulf.editor.adjust_from_lsp(file_path, start.row, start.col)
+            row += 1
+            col += 1
             file_path_and_row_col = "{}:{}:{}".format(file_path, row, col)
             return file_path, file_path_and_row_col, (row, col)
 

@@ -164,6 +164,10 @@ class ULF:
     def references(self, args):
         self.send_request(RequestMethod.REFERENCES, args)
 
+    @pynvim.function('ULF_document_highlight')
+    def document_highlight(self, args):
+        self.send_request(RequestMethod.DOCUMENT_HIGHLIGHT, args)
+
     @pynvim.function('ULF_rename')
     def rename(self, args):
         self.send_request(RequestMethod.RENAME, args)

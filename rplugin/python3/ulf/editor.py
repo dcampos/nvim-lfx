@@ -18,6 +18,7 @@ class VimEditor(Editor):
         self.ulf = ulf
         self.vim: Nvim = self.ulf.vim
         self.window = VimWindow(self)
+        self.hl_id = self.vim.new_highlight_source()
 
     def set_timeout_async(self, f: Callable, timeout_ms: int = 0) -> None:
         timer = Timer(timeout_ms / 1000, lambda: self.vim.async_call(f))
@@ -51,25 +52,25 @@ class VimEditor(Editor):
         self.vim.async_call(input)
 
     def adjust_from_lsp(self, file_path, row, col):
-        """Adjust LSP point to byte index"""
+        """Adjust LSP point to byte index (0-based)"""
         bufnr = self.vim.funcs.bufnr(file_path, True)
         if not self.vim.api.buf_is_loaded(bufnr):
             self.vim.funcs.bufload(bufnr)
         line_text = self.vim.api.buf_get_lines(bufnr, row, row+1, False)[0]
         byte_index = to_byte_index(line_text, col)
-        col = byte_index + 1
-        row = row + 1
+        col = byte_index
+        row = row
         return row, col
 
     def adjust_to_lsp(self, file_path, row, col):
-        """Adjust byte index (1-based) to char index (0-based)"""
+        """Adjust byte index (0-based) to char index (0-based)"""
         bufnr = self.vim.funcs.bufnr(file_path, True)
         if not self.vim.api.buf_is_loaded(bufnr):
             self.vim.funcs.bufload(bufnr)
-        line_text = self.vim.api.buf_get_lines(bufnr, row-1, row, False)[0]
-        char_index = to_char_index(line_text, col-1)
+        line_text = self.vim.api.buf_get_lines(bufnr, row, row+1, False)[0]
+        char_index = to_char_index(line_text, col)
         col = char_index
-        row = row - 1
+        row = row
         return row, col
 
     def apply_workspace_edits(self, changes):

@@ -1,4 +1,4 @@
-from .editor import View, Settings
+from .editor import View
 from .protocol import Point, Range, Notification, Request
 from .typing import Dict, Any
 from .url import filename_to_uri
