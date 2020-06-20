@@ -172,6 +172,14 @@ class ULF:
     def rename(self, args):
         self.send_request(RequestMethod.RENAME, args)
 
+    @pynvim.function('ULF_format')
+    def format(self, args):
+        self.send_request(RequestMethod.FORMATTING, args)
+
+    @pynvim.function('ULF_format_range')
+    def format_range(self, args):
+        self.send_request(RequestMethod.RANGE_FORMATTING, args)
+
     @pynvim.function('ULF_code_actions')
     def code_actions(self, args: List[Dict[str, Any]] = [{}]):
         self.send_request(RequestMethod.CODE_ACTION, args)

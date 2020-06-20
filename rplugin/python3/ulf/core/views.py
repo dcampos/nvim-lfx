@@ -74,7 +74,7 @@ def did_open(view: View, language_id: str) -> Notification:
     return Notification.didOpen(did_open_text_document_params(view, language_id))
 
 
-def did_change(view: View, previous_content: str=None) -> Notification:
+def did_change(view: View, previous_content: str = None) -> Notification:
     return Notification.didChange(did_change_text_document_params(view, previous_content))
 
 
@@ -104,13 +104,13 @@ def formatting_options(view: View) -> Dict[str, Any]:
 def text_document_formatting(view: View) -> Request:
     return Request.formatting({
         "textDocument": text_document_identifier(view),
-        "options": formatting_options(view.settings())
+        "options": formatting_options(view)
     })
 
 
-def text_document_range_formatting(view: View, range: Range) -> Request:
+def text_document_range_formatting(view: View, range_: Range) -> Request:
     return Request.rangeFormatting({
         "textDocument": text_document_identifier(view),
-        "options": formatting_options(view.settings()),
-        "range": range
+        "options": formatting_options(view),
+        "range": range_.to_lsp()
     })

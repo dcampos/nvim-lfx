@@ -75,26 +75,33 @@ class VimEditor(Editor):
 
     def apply_workspace_edits(self, changes):
         for file_path, changelist in changes.items():
-            bufnr = self.vim.funcs.bufnr(file_path)
+            self.apply_document_edits(file_path, changelist)
 
-            buf_exists = bufnr != -1
+    def apply_document_edits(self, file_path, changes):
+        bufnr = self.vim.funcs.bufnr(file_path, True)
 
-            if buf_exists:
-                buffer_lines = self.vim.funcs.readfile(file_path)
-            else:
-                buffer_lines = self.vim.buffers[bufnr][:]
+        if not self.vim.api.buf_is_loaded(bufnr):
+            self.vim.funcs.bufload(bufnr)
+            self.vim.api.buf_set_option(bufnr, 'buflisted', True)
 
-            debug('applying changes to %s' % file_path)
+        buf_exists = bufnr != -1
 
-            for change in reversed(changelist):
-                buffer_lines = self.apply_edit(buffer_lines, change)
+        if buf_exists:
+            buffer_lines = self.vim.funcs.readfile(file_path)
+        else:
+            buffer_lines = self.vim.buffers[bufnr][:]
 
-            # buffer_lines = self.vim.api.buf_get_lines(bufnr, 0, -1, False)
-            self.vim.funcs.writefile(buffer_lines, file_path)
+        debug('applying changes to %s' % file_path)
 
-            if buf_exists:
-                self.vim.api.buf_set_lines(bufnr, 0, -1, False, buffer_lines)
-                self.vim.api.buf_set_option(bufnr, 'modified', False)
+        for change in reversed(changes):
+            buffer_lines = self.apply_edit(buffer_lines, change)
+
+        # buffer_lines = self.vim.api.buf_get_lines(bufnr, 0, -1, False)
+        # self.vim.funcs.writefile(buffer_lines, file_path)
+
+        if buf_exists:
+            self.vim.api.buf_set_lines(bufnr, 0, -1, False, buffer_lines)
+            # self.vim.api.buf_set_option(bufnr, 'modified', False)
 
     def apply_edit(self, source_lines, edit) -> None:
         (start_line, start_col), (end_line, end_col), new_text = edit
