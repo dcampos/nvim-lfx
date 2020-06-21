@@ -28,11 +28,11 @@ class DocumentHighlightHelper(RequestHelper, method=RequestMethod.DOCUMENT_HIGHL
         self.vim.async_call(self._add_highlights, highlights)
 
     def _add_highlights(self, highlights):
-        self.vim.current.buffer.clear_highlight(src_id=self.ulf.editor.hl_id)
+        self.vim.current.buffer.clear_highlight(src_id=self.ulf.editor.symbol_hl_id)
         hl_group = self.vim.vars.get('ulf#highlight#document_highlight', 'Search')
         for (start, end) in highlights:
             file_path = self.current_view().file_name()
             start_row, start_col = self.ulf.editor.adjust_from_lsp(file_path, start.row, start.col)
             end_row, end_col = self.ulf.editor.adjust_from_lsp(file_path, end.row, end.col)
             self.vim.current.buffer.add_highlight(hl_group, start_row, start_col, end_col,
-                                                  src_id=self.ulf.editor.hl_id)
+                                                  src_id=self.ulf.editor.symbol_hl_id)

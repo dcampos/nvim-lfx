@@ -18,7 +18,9 @@ class VimEditor(Editor):
         self.ulf = ulf
         self.vim: Nvim = self.ulf.vim
         self.window = VimWindow(self)
-        self.hl_id = self.vim.new_highlight_source()
+        # TODO: transfer these to the helpers once they are single instances
+        self.symbol_hl_id = self.vim.new_highlight_source()
+        self.color_hl_id = self.vim.new_highlight_source()
 
     def set_timeout_async(self, f: Callable, timeout_ms: int = 0) -> None:
         timer = Timer(timeout_ms / 1000, lambda: self.vim.async_call(f))

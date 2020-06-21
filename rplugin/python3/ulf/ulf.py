@@ -168,6 +168,10 @@ class ULF:
     def document_highlight(self, args):
         self.send_request(RequestMethod.DOCUMENT_HIGHLIGHT, args)
 
+    @pynvim.function('ULF_document_color')
+    def document_color(self, args):
+        self.send_request(RequestMethod.DOCUMENT_COLOR, args)
+
     @pynvim.function('ULF_rename')
     def rename(self, args):
         self.send_request(RequestMethod.RENAME, args)
