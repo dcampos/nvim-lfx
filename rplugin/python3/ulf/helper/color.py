@@ -9,6 +9,10 @@ _groups = []
 
 class DocumentColorHelper(RequestHelper, method=RequestMethod.DOCUMENT_COLOR):
 
+    def __init__(self, ulf, vim, *args, **kwargs) -> None:
+        super().__init__(ulf, vim)
+        self.color_hl_id = self.vim.new_highlight_source()
+
     def run(self) -> None:
 
         view = self.current_view()
@@ -22,11 +26,12 @@ class DocumentColorHelper(RequestHelper, method=RequestMethod.DOCUMENT_COLOR):
         else:
             self.ulf.editor.error_message('Not available!')
 
-    def handle_response(self, response):
+    def handle_response(self, response) -> None:
         color_infos = response if response else []
         self.vim.async_call(self._add_highlights, color_infos)
 
-    def _add_highlights(self, color_infos):
+    def _add_highlights(self, color_infos) -> None:
+        self.vim.current.buffer.clear_highlight(src_id=self.color_hl_id)
         file_path = self.current_view().file_name()
         for color_info in color_infos:
             color = color_info['color']
@@ -46,6 +51,7 @@ class DocumentColorHelper(RequestHelper, method=RequestMethod.DOCUMENT_COLOR):
             if not self.vim.funcs.hlexists(hl_group):
                 self.vim.command('highlight! {} guibg=#{} guifg=#{}'.format(hl_group, bg_color, fg_color))
                 _groups.append(hl_group)
+                debug(_groups)
 
             range_ = Range.from_lsp(color_info['range'])
 
@@ -54,4 +60,4 @@ class DocumentColorHelper(RequestHelper, method=RequestMethod.DOCUMENT_COLOR):
             end_row, end_col = self.ulf.editor.adjust_from_lsp(file_path, range_.end.row,
                                                                range_.end.col)
             self.vim.current.buffer.add_highlight(hl_group, start_row, start_col, end_col,
-                                                  src_id=self.ulf.editor.color_hl_id)
+                                                  src_id=self.color_hl_id)

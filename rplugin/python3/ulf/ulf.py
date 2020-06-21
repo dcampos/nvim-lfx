@@ -207,7 +207,7 @@ class ULF:
     def send_request(self, method, args, sync=False):
         helper = RequestHelper.for_method(method)
         if helper:
-            instance = helper(self, self.vim)
+            instance = helper.instance(self, self.vim)
             if sync:
                 instance.run_sync(*args)
             else:
@@ -295,7 +295,15 @@ class RequestHelper(metaclass=abc.ABCMeta):
         raise NotImplementedError()
 
     @classmethod
-    def for_method(cls, method: str):
+    def instance(cls, ulf, vim, *args, **kwargs) -> 'RequestHelper':
+        try:
+            return cls._instance
+        except AttributeError:
+            cls._instance = cls(ulf, vim, *args, **kwargs)
+            return cls._instance
+
+    @classmethod
+    def for_method(cls, method: str) -> 'RequestHelper':
         helper = cls._registry.get(method)
         return helper
 
