@@ -13,6 +13,7 @@ function! ulf#enable() abort
     command! ULFGotoDefinition call ULF_goto_definition()
     command! ULFGotoTypeDefinition call ULF_goto_type_definition()
     command! ULFGotoImplementation call ULF_goto_implementation()
+    command! ULFGotoDeclaration call ULF_goto_declaration()
     command! -nargs=1 -complete=customlist,<sid>complete_symbols
                 \ ULFWorkspaceSymbol call ULF_workspace_symbol({'query': <q-args>})
     command! ULFReferences call ULF_references()

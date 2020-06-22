@@ -83,6 +83,12 @@ class GotoImplementationHelper(GotoDefinitionHelper, method=RequestMethod.IMPLEM
         super().__init__(ulf, _vim, 'implementation')
 
 
+class GotoDeclarationHelper(GotoDefinitionHelper, method=RequestMethod.DECLARATION):
+
+    def __init__(self, ulf, _vim: Nvim):
+        super().__init__(ulf, _vim, 'declaration')
+
+
 class ReferencesHelper(GotoDefinitionHelper, method=RequestMethod.REFERENCES):
 
     def __init__(self, ulf, vim):

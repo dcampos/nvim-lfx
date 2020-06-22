@@ -154,6 +154,10 @@ class ULF:
     def goto_implementation(self, args):
         self.send_request(RequestMethod.IMPLEMENTATION, *args)
 
+    @pynvim.function('ULF_goto_declaration')
+    def goto_declaration(self, args):
+        self.send_request(RequestMethod.DECLARATION, *args)
+
     @pynvim.function('ULF_workspace_symbol', sync=True)
     def workspace_symbol(self, args):
         self.send_request(RequestMethod.WORKSPACE_SYMBOL, *args)
