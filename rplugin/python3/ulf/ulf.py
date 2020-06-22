@@ -79,8 +79,6 @@ class ULF:
             self.editor,
             ClientHelperDispacher(self, self.vim))
 
-        # debug('helpers = %s' % _HELPERS)
-
         # instances = RequestHelper.instantiate_all(self, vim)
         # debug('instances = %s' % instances)
 
@@ -156,7 +154,7 @@ class ULF:
     def goto_implementation(self, args):
         self.send_request(RequestMethod.IMPLEMENTATION, *args)
 
-    @pynvim.function('ULF_workspace_symbol')
+    @pynvim.function('ULF_workspace_symbol', sync=True)
     def workspace_symbol(self, args):
         self.send_request(RequestMethod.WORKSPACE_SYMBOL, *args)
 
@@ -235,19 +233,6 @@ class ULF:
                     session = self.manager.get_session(config.name, view.file_name())
                     if session and (not capability or session.has_capability(capability)):
                         yield session
-
-
-_HELPERS: Dict[str, Any] = {}
-
-
-def _helper_exists(cls, lsp_method) -> bool:
-    helpers = _HELPERS.get(lsp_method)
-    cls_name = ".".join([cls.__module__, cls.__name__])
-    for helper in helpers:
-        helper_name = ".".join([helper.__module__, helper.__name__])
-        if helper_name == cls_name:
-            return True
-    return False
 
 
 def import_helpers(runtime: str) -> None:

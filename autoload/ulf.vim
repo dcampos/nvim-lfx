@@ -13,12 +13,21 @@ function! ulf#enable() abort
     command! ULFGotoDefinition call ULF_goto_definition()
     command! ULFGotoTypeDefinition call ULF_goto_type_definition()
     command! ULFGotoImplementation call ULF_goto_implementation()
-    command! -nargs=1 ULFWorkspaceSymbol call ULF_workspace_symbol({'query': <q-args>})
+    command! -nargs=1 -complete=customlist,<sid>complete_symbols
+                \ ULFWorkspaceSymbol call ULF_workspace_symbol({'query': <q-args>})
     command! ULFReferences call ULF_references()
     command! ULFDocumentHighlight call ULF_document_highlight()
     command! -nargs=? ULFRename call s:request_rename(<q-args>)
     command! ULFCodeActions call ULF_code_actions({'visual': v:false})
     command! ULFCodeActionsVisual call ULF_code_actions({'visual': v:true})
+endfunction
+
+function! s:complete_symbols(arglead, line, pos) abort
+    let target = 'ulf#workspace_symbol#results'
+    call ULF_workspace_symbol({'query': a:arglead, 'target': target}, v:true)
+    let results = get(g:, target, [])
+    map(results, 'get(v:val, "name")')
+    return results
 endfunction
 
 function! s:request_rename(new_name) abort
