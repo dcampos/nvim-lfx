@@ -158,6 +158,10 @@ class ULF:
     def workspace_symbol(self, args):
         self.send_request(RequestMethod.WORKSPACE_SYMBOL, *args)
 
+    @pynvim.function('ULF_document_symbol', sync=True)
+    def document_symbol(self, args):
+        self.send_request(RequestMethod.DOCUMENT_SYMBOL, *args)
+
     @pynvim.function('ULF_references')
     def references(self, args):
         self.send_request(RequestMethod.REFERENCES, *args)

@@ -3,6 +3,21 @@ from ..core.protocol import RequestMethod, Point
 # from ..core.logging import debug
 from ..core.url import uri_to_filename
 from ..core.typing import Dict, Any
+from ..core.views import text_document_identifier
+
+
+class DocumentSymbolHelper(RequestHelper, method=RequestMethod.DOCUMENT_SYMBOL):
+
+    @property
+    def capability(self) -> str:
+        return 'documentSymbolProvider'
+
+    def params(self, options) -> Dict[str, Any]:
+        view = self.current_view()
+        return {"textDocument": text_document_identifier(view)}
+
+    def handle_response(self, response) -> None:
+        pass  # No implementation for now
 
 
 class WorkspaceSymbolHelper(RequestHelper, method=RequestMethod.WORKSPACE_SYMBOL):
