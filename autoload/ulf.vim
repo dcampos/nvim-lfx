@@ -13,18 +13,18 @@ function! ulf#enable() abort
     command! ULFGotoDefinition call ULF_goto_definition()
     command! ULFGotoTypeDefinition call ULF_goto_type_definition()
     command! ULFGotoImplementation call ULF_goto_implementation()
-    command! -nargs=1 ULFWorkspaceSymbol call ULF_workspace_symbol(<q-args>)
+    command! -nargs=1 ULFWorkspaceSymbol call ULF_workspace_symbol({'query': <q-args>})
     command! ULFReferences call ULF_references()
     command! ULFDocumentHighlight call ULF_document_highlight()
     command! -nargs=? ULFRename call s:request_rename(<q-args>)
-    command! ULFCodeActions call ULF_code_actions(v:false)
-    command! ULFCodeActionsVisual call ULF_code_actions(v:true)
+    command! ULFCodeActions call ULF_code_actions({'visual': v:false})
+    command! ULFCodeActionsVisual call ULF_code_actions({'visual': v:true})
 endfunction
 
 function! s:request_rename(new_name) abort
     let l:new_name = a:new_name ==# '' ? input('New name: ') : a:new_name
     if l:new_name !=# ''
-        call ULF_rename(l:new_name)
+        call ULF_rename({'new_name': l:new_name})
     endif
 endfunction
 
@@ -43,18 +43,18 @@ function! ulf#omni(findstart, base) abort
         return s:find_start()
     endif
 
-    call ULF_complete_sync({'target': 'ulf#completion_results', 'base': a:base})
+    call ULF_complete_sync({'target': 'ulf#completion_results', 'process_response': v:true, 'base': a:base})
     let results = get(g:, 'ulf#completion_results', [])
     return results
 endfunction
 
 function! ulf#complete() abort
-    call ULF_complete({'callback': 'ulf#completion_callback'})
+    call ULF_complete({'callback': 'ulf#completion_callback', 'process_response': v:true})
     return ''
 endfunction
 
 function! ulf#complete_sync() abort
-    call ULF_complete_sync({'target': 'ulf#completion_results'})
+    call ULF_complete_sync({'target': 'ulf#completion_results', 'process_response': v:true})
     let results = get(g:, 'ulf#completion_results', [])
     call ulf#completion_callback(results)
     return ''

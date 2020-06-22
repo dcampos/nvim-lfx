@@ -102,15 +102,15 @@ def formatting_options(view: View) -> Dict[str, Any]:
 
 
 def text_document_formatting(view: View) -> Request:
-    return Request.formatting({
+    return {
         "textDocument": text_document_identifier(view),
         "options": formatting_options(view)
-    })
+    }
 
 
 def text_document_range_formatting(view: View, range_: Range) -> Request:
-    return Request.rangeFormatting({
+    return {
         "textDocument": text_document_identifier(view),
         "options": formatting_options(view),
         "range": range_.to_lsp()
-    })
+    }

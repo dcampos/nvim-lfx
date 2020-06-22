@@ -2,6 +2,7 @@ from ..ulf import RequestHelper
 from ..editor import VimView
 from ..core.edit import parse_workspace_edit
 from ..core.protocol import Diagnostic
+from ..core.sessions import Session
 from ..core.protocol import Request, RequestMethod, Point, Range
 from ..core.typing import Any, List, Dict, Callable, Optional, Union, Tuple, Mapping, TypedDict
 from ..core.url import filename_to_uri
@@ -74,7 +75,7 @@ def request_code_actions(view: VimView, location: Any,
         return request_code_actions_for_selection(view, location, actions_handler)
 
 
-def do_request(session, actions_at_location, file_name, relevant_range, point_diagnostics):
+def do_request(session: Session, actions_at_location, file_name, relevant_range, point_diagnostics):
     params = {
         "textDocument": {
             "uri": filename_to_uri(file_name)
@@ -173,14 +174,17 @@ class CodeActionsHelper(RequestHelper, method=RequestMethod.CODE_ACTION):
     def __init__(self, ulf, vim) -> None:
         super().__init__(ulf, vim)
 
-    def run(self, visual: bool = False) -> None:
+    def run(self, options={}) -> None:
         self.view = self.current_view()  # type: VimView
         self.commands = []  # type: List[Tuple[str, str, CodeActionOrCommand]]
         self.commands_by_config = {}  # type: CodeActionsByConfigName
+        visual = options.get('visual', False)
         if visual:
-            actions_manager.request(self.view, self.selection_range(), self.handle_responses)
+            actions_manager.request(self.view, self.selection_range(),
+                                    lambda res: self.dispatch_response(res, options))
         else:  # No selection
-            actions_manager.request(self.view, self.cursor_point(), self.handle_responses)
+            actions_manager.request(self.view, self.cursor_point(),
+                                    lambda res: self.dispatch_response(res, options))
 
     def combine_commands(self) -> 'List[Tuple[str, str, CodeActionOrCommand]]':
         results = []
@@ -189,7 +193,7 @@ class CodeActionsHelper(RequestHelper, method=RequestMethod.CODE_ACTION):
                 results.append((config, command['title'], command))
         return results
 
-    def handle_responses(self, responses: CodeActionsByConfigName) -> None:
+    def handle_response(self, responses: CodeActionsByConfigName):
         self.commands_by_config = responses
         self.commands = self.combine_commands()
         self.show_popup_menu()

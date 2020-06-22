@@ -1,22 +1,20 @@
 from ..ulf import RequestHelper
+from ..core.typing import Any, Dict
 from ..core.protocol import RequestMethod
-from ..core.logging import debug
+# from ..core.logging import debug
 from ..core.views import text_document_range_formatting, text_document_formatting
 from ..core.edit import parse_text_edit
 
 
 class DocumentFormattingHelper(RequestHelper, method=RequestMethod.FORMATTING):
 
-    def run(self) -> None:
+    def __init__(self, ulf, _vim, capability='documentFormattingProvider'):
+        super().__init__(ulf, _vim, capability)
+
+    def params(self, options) -> Dict[str, Any]:
         view = self.current_view()
-        session = self.ulf.session_for_view(view, 'documentFormattingProvider')
-        if session is not None:
-            session.client.send_request(
-                text_document_formatting(view),
-                self.handle_response,
-                lambda res: debug(res))
-        else:
-            self.ulf.editor.error_message('Not available!')
+        selection = self.selection_range()
+        return text_document_range_formatting(view, selection)
 
     def handle_response(self, response):
         if not response:
@@ -31,14 +29,9 @@ class DocumentFormattingHelper(RequestHelper, method=RequestMethod.FORMATTING):
 class DocumentRangeFormattingHelper(DocumentFormattingHelper,
                                     method=RequestMethod.RANGE_FORMATTING):
 
-    def run(self) -> None:
+    def __init__(self, ulf, _vim):
+        super().__init__(ulf, _vim, 'documentRangeFormattingProvider')
+
+    def params(self, options) -> Dict[str, Any]:
         view = self.current_view()
-        selection = self.selection_range()
-        session = self.ulf.session_for_view(view, 'documentRangeFormattingProvider')
-        if session is not None:
-            session.client.send_request(
-                text_document_range_formatting(view, selection),
-                self.handle_response,
-                lambda res: debug(res))
-        else:
-            self.ulf.editor.error_message('Not available!')
+        return text_document_formatting(view)

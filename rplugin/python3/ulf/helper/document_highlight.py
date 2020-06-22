@@ -1,26 +1,20 @@
 from ..ulf import RequestHelper
-from ..core.protocol import Request, RequestMethod, Range
-from ..core.logging import debug
+from ..core.protocol import RequestMethod, Range
+# from ..core.logging import debug
+from ..core.typing import Dict, Any
 from ..core.views import text_document_position_params
 
 
 class DocumentHighlightHelper(RequestHelper, method=RequestMethod.DOCUMENT_HIGHLIGHT):
 
     def __init__(self, ulf, vim, *args, **kwargs) -> None:
-        super().__init__(ulf, vim)
+        super().__init__(ulf, vim, 'documentHighlightProvider')
         self.symbol_hl_id = self.vim.new_highlight_source()
 
-    def run(self) -> None:
+    def params(self, options) -> Dict[str, Any]:
         view = self.current_view()
         point = self.cursor_point()
-        session = self.ulf.session_for_view(view, 'documentHighlightProvider')
-        if session is not None:
-            session.client.send_request(
-                Request.documentHighlight(text_document_position_params(view, point)),
-                self.handle_response,
-                lambda res: debug(res))
-        else:
-            self.ulf.editor.error_message('Not available!')
+        return text_document_position_params(view, point)
 
     def handle_response(self, response):
         highlights = []

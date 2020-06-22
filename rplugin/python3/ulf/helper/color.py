@@ -1,5 +1,6 @@
 from ..ulf import RequestHelper
-from ..core.protocol import RequestMethod, Request, Range
+from ..core.protocol import RequestMethod, Range
+from ..core.typing import Any, Dict
 from ..core.logging import debug
 from ..core.views import text_document_identifier
 
@@ -13,18 +14,13 @@ class DocumentColorHelper(RequestHelper, method=RequestMethod.DOCUMENT_COLOR):
         super().__init__(ulf, vim)
         self.color_hl_id = self.vim.new_highlight_source()
 
-    def run(self) -> None:
+    @property
+    def capability(self) -> str:
+        return 'colorProvider'
 
+    def params(self, options) -> Dict[str, Any]:
         view = self.current_view()
-        session = self.ulf.session_for_view(view, 'colorProvider')
-        if session is not None:
-            self.ulf.documents.purge_changes(view)
-            session.client.send_request(
-                Request.documentColor({'textDocument': text_document_identifier(view)}),
-                self.handle_response,
-                lambda res: debug(res))
-        else:
-            self.ulf.editor.error_message('Not available!')
+        return {'textDocument': text_document_identifier(view)}
 
     def handle_response(self, response) -> None:
         color_infos = response if response else []

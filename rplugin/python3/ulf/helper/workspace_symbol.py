@@ -1,22 +1,18 @@
 from ..ulf import RequestHelper
-from ..core.protocol import Request, RequestMethod, Point
-from ..core.logging import debug
+from ..core.protocol import RequestMethod, Point
+# from ..core.logging import debug
 from ..core.url import uri_to_filename
-from ..core.typing import Dict
+from ..core.typing import Dict, Any
 
 
 class WorkspaceSymbolHelper(RequestHelper, method=RequestMethod.WORKSPACE_SYMBOL):
 
-    def run(self, query: str) -> None:
-        view = self.current_view()
-        session = self.ulf.session_for_view(view)
-        if session and session.has_capability('workspaceSymbolProvider'):
-            session.client.send_request(
-                Request.workspaceSymbol({'query': query}),
-                self.handle_response,
-                lambda res: debug(res))
-        else:
-            debug('Session is none for buffer={}'.format(view.buffer_id()))
+    @property
+    def capability(self) -> str:
+        return 'workspaceSymbolProvider'
+
+    def params(self, options) -> Dict[str, Any]:
+        return {'query': options.get('query')}
 
     def handle_response(self, response) -> None:
         if not response:

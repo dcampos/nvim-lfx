@@ -3,31 +3,20 @@ from ..core.views import text_document_position_params
 from ..core.protocol import Request, RequestMethod
 from ..core.logging import debug
 from ..core.url import uri_to_filename
-from ..core.typing import Tuple, List
+from ..core.typing import Tuple, List, Any, Dict
 from ..core.protocol import Point
 from pynvim import Nvim
 
 
 class GotoDefinitionHelper(RequestHelper, method=RequestMethod.DEFINITION):
 
-    def __init__(self, ulf, _vim: Nvim):
-        super().__init__(ulf, _vim)
-        self.goto_kind = 'definition'
+    def __init__(self, ulf, _vim: Nvim, kind='definition'):
+        super().__init__(ulf, _vim, kind + 'Provider')
 
-    def run(self) -> None:
+    def params(self, options) -> Dict[str, Any]:
         view = self.current_view()
         point = self.cursor_point()
-        capability = self.goto_kind + 'Provider'
-        session = self.ulf.session_for_view(view, capability)
-        if session:
-            request_type = getattr(Request, self.goto_kind)
-            session.client.send_request(
-                request_type(text_document_position_params(view, point)),
-                self.handle_response,
-                lambda res: debug(res))
-        else:
-            debug('Session is none for buffer={} and {}'.format(view.buffer_id(), capability))
-            self.ulf.editor.error_message("Not available!")
+        return text_document_position_params(view, point)
 
     def handle_response(self, response) -> None:
         def process_response_list(responses: list) -> List[Tuple[str, str, Tuple[int, int]]]:
@@ -85,32 +74,23 @@ class GotoDefinitionHelper(RequestHelper, method=RequestMethod.DEFINITION):
 class GotoTypeDefinitionHelper(GotoDefinitionHelper, method=RequestMethod.TYPE_DEFINITION):
 
     def __init__(self, ulf, _vim: Nvim):
-        super().__init__(ulf, _vim)
-        self.goto_kind = 'typeDefinition'
+        super().__init__(ulf, _vim, 'typeDefinition')
 
 
 class GotoImplementationHelper(GotoDefinitionHelper, method=RequestMethod.IMPLEMENTATION):
 
     def __init__(self, ulf, _vim: Nvim):
-        super().__init__(ulf, _vim)
-        self.goto_kind = 'implementation'
+        super().__init__(ulf, _vim, 'implementation')
 
 
 class ReferencesHelper(GotoDefinitionHelper, method=RequestMethod.REFERENCES):
 
     def __init__(self, ulf, vim):
-        super().__init__(ulf, vim)
-        self.goto_kind = 'references'
+        super().__init__(ulf, vim, 'references')
 
-    def run(self) -> None:
+    def params(self, options) -> Dict[str, Any]:
         view = self.current_view()
         point = self.cursor_point()
-
-        session = self.ulf.session_for_view(view)
-        if session and session.has_capability('referencesProvider'):
-            params = text_document_position_params(view, point)
-            params['context'] = {'includeDeclaration': False}
-            session.client.send_request(
-                Request.references(params),
-                self.handle_response,
-                lambda res: debug(res))
+        params = text_document_position_params(view, point)
+        params['context'] = {'includeDeclaration': False}
+        return params

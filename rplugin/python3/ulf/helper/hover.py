@@ -2,26 +2,19 @@ from ..ulf import RequestHelper
 from ..core.protocol import Request, RequestMethod
 from ..core.logging import debug
 from ..core.views import text_document_position_params
+from ..core.typing import Dict, Any
 from .goto import GotoDefinitionHelper
 
 
 class HoverHelper(RequestHelper, method=RequestMethod.HOVER):
 
     def __init__(self, ulf, vim):
-        super().__init__(ulf, vim)
+        super().__init__(ulf, vim, 'hoverProvider')
 
-    def run(self):
+    def params(self, options) -> Dict[str, Any]:
         view = self.current_view()
         point = self.cursor_point()
-        session = self.ulf.session_for_view(view, 'hoverProvider')
-        if session is not None:
-            session.client.execute_request(
-                Request.hover(text_document_position_params(view, point)),
-                self.handle_response,
-                lambda res: debug(res),
-                10)
-        else:
-            debug('Session is none for buffer={}'.format(view.buffer_id))
+        return text_document_position_params(view, point)
 
     def handle_response(self, response):
         if response is not None:

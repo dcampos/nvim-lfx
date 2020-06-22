@@ -7,7 +7,7 @@ from pynvim import Nvim
 from .core.typing import Dict, List, Callable, Optional, Any, Iterator
 from .core.settings import settings, ClientConfigs, ClientConfig
 from .core.sessions import create_session, Session
-from .core.protocol import WorkspaceFolder, Point, Range, RequestMethod
+from .core.protocol import WorkspaceFolder, Point, Range, RequestMethod, Request
 from .core.logging import set_log_file, set_debug_logging, set_exception_logging, debug
 from .core.workspace import ProjectFolders
 from .core.diagnostics import DiagnosticsStorage
@@ -138,63 +138,63 @@ class ULF:
 
     @pynvim.function('ULF_hover')
     def hover(self, args):
-        self.send_request(RequestMethod.HOVER, args)
+        self.send_request(RequestMethod.HOVER, *args)
 
     @pynvim.function('ULF_signature_help')
     def signature_help(self, args):
-        self.send_request(RequestMethod.SIGNATURE_HELP, args)
+        self.send_request(RequestMethod.SIGNATURE_HELP, *args)
 
     @pynvim.function('ULF_goto_definition')
     def goto_definition(self, args):
-        self.send_request(RequestMethod.DEFINITION, args)
+        self.send_request(RequestMethod.DEFINITION, *args)
 
     @pynvim.function('ULF_goto_type_definition')
     def goto_type_definition(self, args):
-        self.send_request(RequestMethod.TYPE_DEFINITION, args)
+        self.send_request(RequestMethod.TYPE_DEFINITION, *args)
 
     @pynvim.function('ULF_goto_implementation')
     def goto_implementation(self, args):
-        self.send_request(RequestMethod.IMPLEMENTATION, args)
+        self.send_request(RequestMethod.IMPLEMENTATION, *args)
 
     @pynvim.function('ULF_workspace_symbol')
     def workspace_symbol(self, args):
-        self.send_request(RequestMethod.WORKSPACE_SYMBOL, args)
+        self.send_request(RequestMethod.WORKSPACE_SYMBOL, *args)
 
     @pynvim.function('ULF_references')
     def references(self, args):
-        self.send_request(RequestMethod.REFERENCES, args)
+        self.send_request(RequestMethod.REFERENCES, *args)
 
     @pynvim.function('ULF_document_highlight')
     def document_highlight(self, args):
-        self.send_request(RequestMethod.DOCUMENT_HIGHLIGHT, args)
+        self.send_request(RequestMethod.DOCUMENT_HIGHLIGHT, *args)
 
     @pynvim.function('ULF_document_color')
     def document_color(self, args):
-        self.send_request(RequestMethod.DOCUMENT_COLOR, args)
+        self.send_request(RequestMethod.DOCUMENT_COLOR, *args)
 
     @pynvim.function('ULF_rename')
     def rename(self, args):
-        self.send_request(RequestMethod.RENAME, args)
+        self.send_request(RequestMethod.RENAME, *args)
 
     @pynvim.function('ULF_format')
     def format(self, args):
-        self.send_request(RequestMethod.FORMATTING, args)
+        self.send_request(RequestMethod.FORMATTING, *args)
 
     @pynvim.function('ULF_format_range')
     def format_range(self, args):
-        self.send_request(RequestMethod.RANGE_FORMATTING, args)
+        self.send_request(RequestMethod.RANGE_FORMATTING, *args)
 
     @pynvim.function('ULF_code_actions')
     def code_actions(self, args: List[Dict[str, Any]] = [{}]):
-        self.send_request(RequestMethod.CODE_ACTION, args)
+        self.send_request(RequestMethod.CODE_ACTION, *args)
 
     @pynvim.function('ULF_complete')
     def complete(self, args: List[Dict[str, Any]] = [{}]):
-        self.send_request(RequestMethod.COMPLETION, args)
+        self.send_request(RequestMethod.COMPLETION, *args)
 
     @pynvim.function('ULF_complete_sync', sync=True)
     def complete_sync(self, args: List[Dict[str, Any]] = [{}]):
-        self.send_request(RequestMethod.COMPLETION, args, sync=True)
+        self.send_request(RequestMethod.COMPLETION, *args)
 
     @pynvim.function('ULF_show_diagnostics')
     def show_diagnostics(self, args):
@@ -204,14 +204,15 @@ class ULF:
             self.diagnostics_presenter.show_all(view.file_name())
 
     @pynvim.function('ULF_send_request')
-    def send_request(self, method, args, sync=False):
+    def send_request(self, method, opts={}, sync=False):
+        debug('send_request, method={}, opts={}, sync={}'.format(method, opts, sync))
         helper = RequestHelper.for_method(method)
         if helper:
             instance = helper.instance(self, self.vim)
             if sync:
-                instance.run_sync(*args)
+                instance.run_sync(opts)
             else:
-                instance.run(*args)
+                instance.run(opts)
         else:
             debug('No helper found for method={}'.format(method))
 
@@ -265,9 +266,10 @@ def import_helpers(runtime: str) -> None:
 class RequestHelper(metaclass=abc.ABCMeta):
     _registry = {}
 
-    def __init__(self, ulf: ULF, vim: Nvim):
+    def __init__(self, ulf: ULF, vim: Nvim, capability: str = None) -> None:
         self.ulf = ulf
         self.vim = vim
+        self._capability = capability
 
     def current_view(self) -> VimView:
         bufnr = self.vim.current.buffer.number
@@ -288,11 +290,73 @@ class RequestHelper(metaclass=abc.ABCMeta):
         col = to_char_index(line_text, col)
         return Point(row, col)
 
-    def run(self, *args, **kwargs):
-        raise NotImplementedError()
+    @property
+    def capability(self) -> Optional[str]:
+        """Needed capability for this request"""
+        return self._capability
 
-    def run_sync(self, *args, **kwargs):
-        raise NotImplementedError()
+    def params(self, *args, **kwargs) -> Optional[Dict[str, Any]]:
+        """Prepare params for the request"""
+        pass
+
+    def run(self, options: Dict[str, Any] = {}):
+        params = self.params(options)
+        view = self.current_view()
+        session = self.ulf.session_for_view(view, self.capability)
+        method = self._method
+        if session is not None:
+            self.ulf.documents.purge_changes(view)
+            session.client.send_request(Request(method, params),
+                                        lambda res: self.vim.async_call(
+                                            self.dispatch_response, res, options),
+                                        lambda res: debug(res))
+        else:
+            self.ulf.editor.error_message('Not available!')
+
+    def run_sync(self, options: Dict[str, Any]):
+        params = self.params(options)
+        view = self.current_view()
+        session = self.ulf.session_for_view(view, self.capability)
+        method = self._method
+        if session is not None:
+            self.ulf.documents.purge_changes(view)
+            session.client.execute_request(Request(method, params),
+                                           lambda res: self.dispatch_response(res, options),
+                                           lambda res: debug(res))
+        else:
+            self.ulf.editor.error_message('Not available!')
+
+    def dispatch_response(self, response, options):
+        """Dispatches the response according to the options passed"""
+
+        if options.get('process_response', False):
+            response = self.process_response(response, options)
+
+        target = options.get('target')
+
+        if target:
+            self.vim.vars[target] = response
+
+        callback = options.get('callback')
+
+        if callback:
+            include_results = options.get('include_results', True)
+            if include_results:
+                self.vim.call(callback, response)
+            else:
+                self.vim.call(callback)
+
+        if not callback and not target:
+            self.handle_response(response)
+
+    @abc.abstractmethod
+    def handle_response(self, response):
+        pass
+
+    def process_response(self, response, options) -> Any:
+        """Should process the response and return the processed value. NOT mandatory.
+        """
+        return response
 
     @classmethod
     def instance(cls, ulf, vim, *args, **kwargs) -> 'RequestHelper':
@@ -309,6 +373,7 @@ class RequestHelper(metaclass=abc.ABCMeta):
 
     def __init_subclass__(cls, method=None, **kwargs):
         super().__init_subclass__(**kwargs)
+        cls._method = method
         cls._registry[method] = cls
 
 
