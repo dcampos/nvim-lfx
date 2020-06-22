@@ -46,7 +46,7 @@ class Editor(metaclass=abc.ABCMeta):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def show_message_request(self, source, message_type, message, titles, on_result):
+    def show_menu(self, options: List[str], handler: Callable[[int], None], message: str = None) -> None:
         raise NotImplementedError()
 
 

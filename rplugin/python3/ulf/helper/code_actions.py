@@ -199,7 +199,8 @@ class CodeActionsHelper(RequestHelper, method=RequestMethod.CODE_ACTION):
         self.show_popup_menu()
 
     def show_popup_menu(self) -> None:
-        self.view.show_menu([command[1] for command in self.commands], self.handle_select)
+        options = [command[1] for command in self.commands]
+        self.view.editor.show_menu(options, self.handle_select, 'Code actions:')
 
     def handle_select(self, index: int) -> None:
         if len(self.commands) > index > -1:

@@ -13,8 +13,7 @@ class DocumentFormattingHelper(RequestHelper, method=RequestMethod.FORMATTING):
 
     def params(self, options) -> Dict[str, Any]:
         view = self.current_view()
-        selection = self.selection_range()
-        return text_document_range_formatting(view, selection)
+        return text_document_formatting(view)
 
     def handle_response(self, response):
         if not response:
@@ -34,4 +33,5 @@ class DocumentRangeFormattingHelper(DocumentFormattingHelper,
 
     def params(self, options) -> Dict[str, Any]:
         view = self.current_view()
-        return text_document_formatting(view)
+        selection = self.selection_range()
+        return text_document_range_formatting(view, selection)

@@ -2,11 +2,19 @@ from .typing import Any, List, Dict, Optional, Union, Mapping, Iterable
 from .url import filename_to_uri
 from .url import uri_to_filename
 import os
+import enum
 
 
 TextDocumentSyncKindNone = 0
 TextDocumentSyncKindFull = 1
 TextDocumentSyncKindIncremental = 2
+
+
+class MessageType(int, enum.Enum):
+    Error = 1
+    Warning = 2
+    Info = 3
+    Log = 4
 
 
 class DiagnosticSeverity(object):

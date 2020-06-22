@@ -1,7 +1,8 @@
-from .protocol import Response
+from .protocol import Response, MessageType
 from .rpc import Client
 from .typing import Any, List, Callable
 from .editor import View
+from .logging import debug
 
 
 class MessageRequestHandler():
@@ -19,7 +20,7 @@ class MessageRequestHandler():
     def _send_user_choice(self, href: int = -1) -> None:
         if not self.request_sent:
             self.request_sent = True
-            self.view.hide_popup()
+            # self.view.hide_popup()
             # when noop; nothing was selected e.g. the user pressed escape
             param = None
             index = int(href)
@@ -29,6 +30,7 @@ class MessageRequestHandler():
             self.client.send_response(response)
 
     def show(self) -> None:
+        debug('{} - {} - {}'.format(self.message_type,  self.message, self.titles))
         show_notification(
             self.view,
             self.source,
@@ -41,5 +43,12 @@ class MessageRequestHandler():
 
 def show_notification(view: View, source: str, message_type: int, message: str, titles: List[str],
                       on_result: Callable) -> None:
-    # show_message_request(source, message_type, message, titles, on_result)
-    view.show_menu(titles, on_result, message)
+    if titles:
+        view.editor.show_menu(titles, on_result, message)
+    else:
+        message = '[{}] {}'.format(MessageType(message_type).name, message)
+        if message_type == MessageType.Error:
+            view.editor.error_message(message)
+        else:
+            view.editor.status_message(message)
+        on_result(-1)

@@ -11,6 +11,7 @@ from .core.logging import debug
 from .core.message_request_handler import MessageRequestHandler
 from .core.rpc import Client, Response, EditorLogger, Notification
 from .core.edit import parse_workspace_edit
+from .core.protocol import MessageType
 from .editor import VimEditor
 
 import threading
@@ -207,8 +208,12 @@ class ContextManager(object):
             self._sessions.setdefault(config.name, []).append(session)
 
     def _handle_message_request(self, params: dict, source: str, client: Client, request_id: Any) -> None:
-        handler = MessageRequestHandler(self._window.active_view(), client, request_id, params, source)  # type: ignore
-        handler.show()
+        def handle_message():
+            debug('handle_message called')
+            handler = MessageRequestHandler(self._window.active_view(), client,
+                                            request_id, params, source)  # type: ignore
+            handler.show()
+        self._editor.set_timeout_async(handle_message)
 
     def restart_sessions(self) -> None:
         self._restarting = True
@@ -337,4 +342,8 @@ class ContextManager(object):
             self._handle_server_message(name, message)
 
     def _handle_show_message(self, name: str, params: Any) -> None:
-        self._editor.status_message("{}: {}".format(name, extract_message(params)))
+        message = "{}: {}".format(name, extract_message(params))
+        if message == MessageType.Error:
+            self._editor.error_message(message)
+        else:
+            self._editor.status_message(message)

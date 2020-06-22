@@ -47,11 +47,16 @@ class VimEditor(Editor):
     def active_window(self):
         return self.window
 
-    def show_message_request(self, source, message_type, message, titles, on_result):
-        def input():
-            result = self.vim.funcs.inputlist(titles)
-            self.vim.async_call(on_result, result)
-        self.vim.async_call(input)
+    def show_menu(self, options: List[str], handler: Callable[[int], None], message: str = None) -> None:
+        def show_and_handle():
+            items = ['{}. {}'.format(i+1, o) for i, o in enumerate(options)]
+            if message:
+                items.insert(0, message)
+            res = self.vim.funcs.inputlist(items) - 1
+            handler(res)
+
+        if options:
+            self.vim.async_call(show_and_handle)
 
     def adjust_from_lsp(self, file_path, row, col):
         """Adjust LSP point to byte index (0-based)"""
@@ -224,17 +229,6 @@ class VimView(View):
 
     def is_valid(self):
         return self.vim.api.buf_is_valid(self._bufnr)
-
-    def show_menu(self, options: List[str], handler: Callable[[int], None], message: str = None) -> None:
-        def show_and_handle():
-            items = ['{}. {}'.format(i+1, o) for i, o in enumerate(options)]
-            if message:
-                items.insert(0, message)
-            res = self.vim.funcs.inputlist(items) - 1
-            handler(res)
-
-        if options:
-            self.vim.async_call(show_and_handle)
 
     def available_sessions(self, capability: str = None) -> Iterator[Session]:
         yield from self.editor.ulf.sessions_for_view(self, capability)
