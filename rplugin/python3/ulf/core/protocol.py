@@ -10,7 +10,7 @@ TextDocumentSyncKindFull = 1
 TextDocumentSyncKindIncremental = 2
 
 
-class MessageType(int, enum.Enum):
+class MessageType(enum.IntEnum):
     Error = 1
     Warning = 2
     Info = 3

@@ -6,10 +6,10 @@ from ..core.views import text_document_range_formatting, text_document_formattin
 from ..core.edit import parse_text_edit
 
 
-class DocumentFormattingHelper(RequestHelper, method=RequestMethod.FORMATTING):
+class DocumentFormattingHelper(RequestHelper, method=RequestMethod.FORMATTING, capability='documentFormattingProvider'):
 
-    def __init__(self, ulf, _vim, capability='documentFormattingProvider'):
-        super().__init__(ulf, _vim, capability)
+    def __init__(self, ulf, _vim):
+        super().__init__(ulf, _vim)
 
     def params(self, options) -> Dict[str, Any]:
         view = self.current_view()
@@ -26,10 +26,7 @@ class DocumentFormattingHelper(RequestHelper, method=RequestMethod.FORMATTING):
 
 
 class DocumentRangeFormattingHelper(DocumentFormattingHelper,
-                                    method=RequestMethod.RANGE_FORMATTING):
-
-    def __init__(self, ulf, _vim):
-        super().__init__(ulf, _vim, 'documentRangeFormattingProvider')
+                                    method=RequestMethod.RANGE_FORMATTING, capability='documentRangeFormattingProvider'):
 
     def params(self, options) -> Dict[str, Any]:
         view = self.current_view()

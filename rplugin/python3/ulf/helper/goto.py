@@ -8,10 +8,7 @@ from ..core.protocol import Point
 from pynvim import Nvim
 
 
-class GotoDefinitionHelper(RequestHelper, method=RequestMethod.DEFINITION):
-
-    def __init__(self, ulf, _vim: Nvim, kind='definition'):
-        super().__init__(ulf, _vim, kind + 'Provider')
+class GotoDefinitionHelper(RequestHelper, method=RequestMethod.DEFINITION, capability='definitionProvider'):
 
     def params(self, options) -> Dict[str, Any]:
         view = self.current_view()
@@ -71,28 +68,20 @@ class GotoDefinitionHelper(RequestHelper, method=RequestMethod.DEFINITION):
         self.vim.command('copen')
 
 
-class GotoTypeDefinitionHelper(GotoDefinitionHelper, method=RequestMethod.TYPE_DEFINITION):
-
-    def __init__(self, ulf, _vim: Nvim):
-        super().__init__(ulf, _vim, 'typeDefinition')
+class GotoTypeDefinitionHelper(GotoDefinitionHelper, method=RequestMethod.TYPE_DEFINITION, capability='typeDefinition'):
+    pass
 
 
-class GotoImplementationHelper(GotoDefinitionHelper, method=RequestMethod.IMPLEMENTATION):
-
-    def __init__(self, ulf, _vim: Nvim):
-        super().__init__(ulf, _vim, 'implementation')
-
-
-class GotoDeclarationHelper(GotoDefinitionHelper, method=RequestMethod.DECLARATION):
-
-    def __init__(self, ulf, _vim: Nvim):
-        super().__init__(ulf, _vim, 'declaration')
+class GotoImplementationHelper(GotoDefinitionHelper, method=RequestMethod.IMPLEMENTATION,
+                               capability='implementationProvider'):
+    pass
 
 
-class ReferencesHelper(GotoDefinitionHelper, method=RequestMethod.REFERENCES):
+class GotoDeclarationHelper(GotoDefinitionHelper, method=RequestMethod.DECLARATION, capability='declarationProvider'):
+    pass
 
-    def __init__(self, ulf, vim):
-        super().__init__(ulf, vim, 'references')
+
+class ReferencesHelper(GotoDefinitionHelper, method=RequestMethod.REFERENCES, capability='referencesProvider'):
 
     def params(self, options) -> Dict[str, Any]:
         view = self.current_view()

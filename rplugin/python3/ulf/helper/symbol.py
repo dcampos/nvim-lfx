@@ -6,11 +6,7 @@ from ..core.typing import Dict, Any
 from ..core.views import text_document_identifier
 
 
-class DocumentSymbolHelper(RequestHelper, method=RequestMethod.DOCUMENT_SYMBOL):
-
-    @property
-    def capability(self) -> str:
-        return 'documentSymbolProvider'
+class DocumentSymbolHelper(RequestHelper, method=RequestMethod.DOCUMENT_SYMBOL, capability='documentSymbolProvider'):
 
     def params(self, options) -> Dict[str, Any]:
         view = self.current_view()
@@ -20,11 +16,7 @@ class DocumentSymbolHelper(RequestHelper, method=RequestMethod.DOCUMENT_SYMBOL):
         pass  # No implementation for now
 
 
-class WorkspaceSymbolHelper(RequestHelper, method=RequestMethod.WORKSPACE_SYMBOL):
-
-    @property
-    def capability(self) -> str:
-        return 'workspaceSymbolProvider'
+class WorkspaceSymbolHelper(RequestHelper, method=RequestMethod.WORKSPACE_SYMBOL, capability='workspaceSymbolProvider'):
 
     def params(self, options) -> Dict[str, Any]:
         return {'query': options.get('query')}

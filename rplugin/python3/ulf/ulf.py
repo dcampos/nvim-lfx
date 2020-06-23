@@ -259,10 +259,9 @@ def import_helpers(runtime: str) -> None:
 class RequestHelper(metaclass=abc.ABCMeta):
     _registry = {}
 
-    def __init__(self, ulf: ULF, vim: Nvim, capability: str = None) -> None:
+    def __init__(self, ulf: ULF, vim: Nvim) -> None:
         self.ulf = ulf
         self.vim = vim
-        self._capability = capability
 
     def current_view(self) -> VimView:
         bufnr = self.vim.current.buffer.number
@@ -309,7 +308,7 @@ class RequestHelper(metaclass=abc.ABCMeta):
     def run_sync(self, options: Dict[str, Any]):
         params = self.params(options)
         view = self.current_view()
-        session = self.ulf.session_for_view(view, self.capability)
+        session = self.ulf.session_for_view(view, self._capability)
         method = self._method
         if session is not None:
             self.ulf.documents.purge_changes(view)
@@ -364,9 +363,10 @@ class RequestHelper(metaclass=abc.ABCMeta):
         helper = cls._registry.get(method)
         return helper
 
-    def __init_subclass__(cls, method=None, **kwargs):
+    def __init_subclass__(cls, method=None, capability=None, **kwargs):
         super().__init_subclass__(**kwargs)
         cls._method = method
+        cls._capability = capability
         cls._registry[method] = cls
 
 

@@ -6,11 +6,7 @@ from ..core.signature_help import create_signature_help
 from ..core.views import text_document_position_params
 
 
-class SignatureHelpHelper(RequestHelper, method=RequestMethod.SIGNATURE_HELP):
-
-    @property
-    def capability(self) -> str:
-        return 'signatureHelpProvider'
+class SignatureHelpHelper(RequestHelper, method=RequestMethod.SIGNATURE_HELP, capability='signatureHelpProvider'):
 
     def params(self, options) -> Dict[str, Any]:
         view = self.current_view()

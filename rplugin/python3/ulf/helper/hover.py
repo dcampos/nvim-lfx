@@ -6,10 +6,10 @@ from ..core.typing import Dict, Any
 from .goto import GotoDefinitionHelper
 
 
-class HoverHelper(RequestHelper, method=RequestMethod.HOVER):
+class HoverHelper(RequestHelper, method=RequestMethod.HOVER, capability='hoverProvider'):
 
     def __init__(self, ulf, vim):
-        super().__init__(ulf, vim, 'hoverProvider')
+        super().__init__(ulf, vim)
 
     def params(self, options) -> Dict[str, Any]:
         view = self.current_view()

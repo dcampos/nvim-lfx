@@ -6,10 +6,10 @@ from ..core.views import text_document_position_params
 from ..core.completion import parse_completion_response, completion_item_kind_names
 
 
-class CompletionHelper(RequestHelper, method=RequestMethod.COMPLETION):
+class CompletionHelper(RequestHelper, method=RequestMethod.COMPLETION, capability='completionProvider'):
 
     def __init__(self, ulf, vim):
-        super().__init__(ulf, vim, 'completionProvider')
+        super().__init__(ulf, vim)
 
     def params(self, options):
         view = self.current_view()

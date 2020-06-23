@@ -8,15 +8,11 @@ from ..core.views import text_document_identifier
 _groups = []
 
 
-class DocumentColorHelper(RequestHelper, method=RequestMethod.DOCUMENT_COLOR):
+class DocumentColorHelper(RequestHelper, method=RequestMethod.DOCUMENT_COLOR, capability='colorProvider'):
 
     def __init__(self, ulf, vim, *args, **kwargs) -> None:
         super().__init__(ulf, vim)
         self.color_hl_id = self.vim.new_highlight_source()
-
-    @property
-    def capability(self) -> str:
-        return 'colorProvider'
 
     def params(self, options) -> Dict[str, Any]:
         view = self.current_view()

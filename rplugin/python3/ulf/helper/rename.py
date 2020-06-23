@@ -7,10 +7,10 @@ from ..core.typing import Dict, Any
 from pynvim import Nvim
 
 
-class RenameHelper(RequestHelper, method=RequestMethod.RENAME):
+class RenameHelper(RequestHelper, method=RequestMethod.RENAME, capability='renameProvider'):
 
     def __init__(self, ulf: ULF, vim: Nvim) -> None:
-        super().__init__(ulf, vim, 'renameProvider')
+        super().__init__(ulf, vim)
 
     def params(self, options) -> Dict[str, Any]:
         view = self.current_view()
