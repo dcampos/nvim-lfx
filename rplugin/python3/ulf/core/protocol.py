@@ -56,7 +56,7 @@ class SymbolKind(object):
 symbol_kinds = list(range(SymbolKind.File, SymbolKind.TypeParameter + 1))
 
 
-class CompletionItemKind(object):
+class CompletionItemKind(enum.IntEnum):
     Text = 1
     Method = 2
     Function = 3
