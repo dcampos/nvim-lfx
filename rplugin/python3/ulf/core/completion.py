@@ -4,7 +4,7 @@ from .logging import debug
 from .typing import Tuple, Optional, Dict, List, Union
 
 
-completion_item_kind_names = {v: k for k, v in CompletionItemKind.__dict__.items()}
+completion_item_kind_names = {v.value: v.name for v in CompletionItemKind}
 
 
 def get_completion_hint(item: dict, settings: Settings) -> Optional[str]:
