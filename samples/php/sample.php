@@ -9,4 +9,6 @@ function foo_function(string $greeting = "Olá", string $name = "João") {
 	echo "$greeting, $name!";
 }
 
-foo
+function no_params() {
+	echo "No params accepted!";
+}

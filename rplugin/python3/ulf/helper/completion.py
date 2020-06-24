@@ -5,6 +5,8 @@ from ..core.protocol import RequestMethod
 from ..core.views import text_document_position_params
 from ..core.completion import parse_completion_response, completion_item_kind_names
 
+import json
+
 
 class CompletionHelper(RequestHelper, method=RequestMethod.COMPLETION, capability='completionProvider'):
 
@@ -29,18 +31,51 @@ class CompletionHelper(RequestHelper, method=RequestMethod.COMPLETION, capabilit
 
         base = options.get('base')
 
-        for item in items:
-            if base and not item['label'].startswith(base):
+        for rec in items:
+            if base and not rec['label'].startswith(base):
                 continue
 
-            matches.append({
-                'word': item.get('insertText') or item['label'],
-                'abbr': item['label'],
-                'menu': item.get('detail', ''),
-                'kind': completion_item_kind_names[item.get('kind')],
-                'icase': 1,
+            if 'textEdit' in rec and rec['textEdit'] is not None:
+                textEdit = rec['textEdit']
+                if textEdit['range']['start'] == textEdit['range']['end']:
+                    previous_input = self.vim.vars['deoplete#source#ulf#_prev_input']
+                    new_text = textEdit['newText']
+                    word = f'{previous_input}{new_text}'
+                else:
+                    word = textEdit['newText']
+            elif rec.get('insertText', ''):
+                if rec.get('insertTextFormat', 1) != 1:
+                    word = rec.get('entryName', rec.get('label'))
+                else:
+                    word = rec['insertText']
+            else:
+                word = rec.get('entryName', rec.get('label'))
+
+            item = {
+                'word': word,
+                'abbr': rec['label'],
                 'dup': 1,
+                'icase': 1,
                 'empty': 1,
-            })
+                'user_data': json.dumps({
+                    'lspitem': rec
+                })
+            }
+
+            if isinstance(rec.get('kind'), int):
+                item['kind'] = completion_item_kind_names.get(rec['kind'])
+
+            if rec.get('detail'):
+                item['menu'] = rec['detail']
+
+            if isinstance(rec.get('documentation'), str):
+                item['info'] = rec['documentation']
+            elif isinstance(rec.get('documentation'), dict) and 'value' in rec['documentation']:
+                item['info'] = rec['documentation']['value']
+
+            if rec.get('insertTextFormat') == 2:
+                item['kind'] = 'Snippet'
+
+            matches.append(item)
 
         return matches

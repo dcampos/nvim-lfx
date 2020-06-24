@@ -21,6 +21,7 @@ class VimDocumentHandler(object):
         self._settings = settings
         self._configs = configs
         self._document_states = set()  # type: Set[str]
+        self._document_versions = dict()  # type: Dict[str, int]
         self._content_states = {}  # type: Dict[str, str]
         self._pending_buffer_changes = dict()  # type: Dict[int, Dict]
         self._sessions = dict()  # type: Dict[str, List[Session]]
@@ -177,15 +178,20 @@ class VimDocumentHandler(object):
 
             if view.buffer_id() in self._pending_buffer_changes:
                 del self._pending_buffer_changes[view.buffer_id()]
+                # Do not send the same version twice
+                if self._document_versions.get(file_name) == view.change_count():
+                    return
+                self._document_versions[file_name] = view.change_count()
                 previous_content = self._content_states.get(file_name, '')
                 # mypy: expected editor.View, got View
                 for session in self._get_applicable_sessions(view):
                     if session.client and file_name in self._document_states and session.should_notify_did_change():
                         if session.text_sync_kind() == TextDocumentSyncKindIncremental:
-                            session.client.send_notification(did_change(view, previous_content))
+                            notification = did_change(view, previous_content)
                         else:
                             # Full sync
-                            session.client.send_notification(did_change(view))
+                            notification = did_change(view)
+                        session.client.send_notification(notification)
                 self._content_states[file_name] = view.entire_content()
 
 
