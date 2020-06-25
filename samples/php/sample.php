@@ -12,3 +12,6 @@ function foo_function(string $greeting = "Olá", string $name = "João") {
 function no_params() {
 	echo "No params accepted!";
 }
+
+function multi_params($parama, $paramb, $paramc=null) {
+}

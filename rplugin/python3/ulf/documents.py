@@ -1,4 +1,4 @@
-from .core.typing import Any, Set, Dict, List, Optional, Iterator
+from .core.typing import Any, Dict, List, Optional, Iterator, Tuple
 from .core.settings import Settings
 from .core.workspace import ProjectFolders
 from .core.configurations import create_window_configs
@@ -20,7 +20,7 @@ class VimDocumentHandler(object):
         self._editor = editor
         self._settings = settings
         self._configs = configs
-        self._document_states = set()  # type: Set[str]
+        self._document_states = dict()  # type: Dict[str, Tuple[int, str]]
         self._document_versions = dict()  # type: Dict[str, int]
         self._content_states = {}  # type: Dict[str, str]
         self._pending_buffer_changes = dict()  # type: Dict[int, Dict]
@@ -62,7 +62,7 @@ class VimDocumentHandler(object):
 
     def _notify_open_documents(self, session: Session) -> None:
         # Note: a copy is made of self._document_states because it may be modified in another thread.
-        for file_name in list(self._document_states):
+        for file_name in list(self._document_states.keys()):
             if session.handles_path(file_name):
                 view = self._window.find_open_file(file_name)
                 if view:
@@ -88,7 +88,7 @@ class VimDocumentHandler(object):
         if file_name and file_name not in self._document_states:
             config_languages = self._config_languages(view)
             if len(config_languages):
-                self._document_states.add(file_name)
+                self._document_states[file_name] = None, None
                 # the sessions may not be available yet,
                 # the document will get synced when a session is added.
                 sessions = self._get_applicable_sessions(view)
@@ -107,7 +107,7 @@ class VimDocumentHandler(object):
         file_name = view.file_name() or ""
         debug("Handling did_close", file_name)
         try:
-            self._document_states.remove(file_name)
+            del self._document_states[file_name]
         except KeyError:
             return
         # mypy: expected editor.View, got View
@@ -176,13 +176,12 @@ class VimDocumentHandler(object):
             if file_name not in self._document_states:
                 self.handle_did_open(view)
 
-            if view.buffer_id() in self._pending_buffer_changes:
+            if file_name in self._document_states and view.buffer_id() in self._pending_buffer_changes:
                 del self._pending_buffer_changes[view.buffer_id()]
                 # Do not send the same version twice
-                if self._document_versions.get(file_name) == view.change_count():
+                if self._document_states[file_name][0] == view.change_count():
                     return
-                self._document_versions[file_name] = view.change_count()
-                previous_content = self._content_states.get(file_name, '')
+                previous_content = self._document_states[file_name][1]
                 # mypy: expected editor.View, got View
                 for session in self._get_applicable_sessions(view):
                     if session.client and file_name in self._document_states and session.should_notify_did_change():
@@ -192,7 +191,7 @@ class VimDocumentHandler(object):
                             # Full sync
                             notification = did_change(view)
                         session.client.send_notification(notification)
-                self._content_states[file_name] = view.entire_content()
+                self._document_states[file_name] = view.change_count(), view.entire_content()
 
 
 class VimConfigManager(object):

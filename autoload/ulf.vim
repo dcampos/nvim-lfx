@@ -3,9 +3,9 @@ let g:ulf#completion_results = []
 function! ulf#enable() abort
     augroup ulf
         autocmd!
-        autocmd BufEnter,BufWinEnter,FileType * call ULF_handle_did_open() 
-        autocmd BufWipeout,BufDelete,BufUnload * call ULF_handle_did_close()
-        autocmd VimLeavePre * call ULF_handle_leave() 
+        autocmd BufEnter,BufWinEnter,FileType * silent! call ULF_handle_did_open() 
+        autocmd BufWipeout,BufDelete,BufUnload * silent! call ULF_handle_did_close()
+        autocmd VimLeavePre * silent! call ULF_handle_leave() 
     augroup END
 
     command! ULFHover call ULF_hover()

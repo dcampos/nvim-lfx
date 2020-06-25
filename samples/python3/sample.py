@@ -17,5 +17,10 @@ def hello(name: str= "João", greeting: str = "Hello", foo: str = ...):
 
 hello("You", "Hi")
 
+def with_params(param: str, paramb: int, paramc: str = None):
+    print(f'param={param}')
+
+
+
 #child = Child()
 #child.foo()
