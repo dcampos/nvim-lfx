@@ -3,8 +3,10 @@ from .core.editor import Editor, Window, View
 from .core.sessions import Session
 from .core.logging import debug
 from .core.diagnostics import Diagnostic
+from .core.edit import parse_range
 from .util import to_byte_index, to_char_index
 import os
+import re
 
 from pynvim import Nvim
 from pynvim.api import Buffer
@@ -113,11 +115,36 @@ class VimEditor(Editor):
                       if end_line < len(source_lines) else '')
 
         new_text = text_before + new_text + text_after
-        new_lines = new_text.splitlines()
+
+        # Not using splitlines in order to keep empty ending lines
+        new_lines = re.split(r'(?:\r?\n)', new_text)
 
         source_lines[start_line:end_line + 1] = new_lines
 
         return source_lines
+
+    def test_changes(self, changelist, old_content, new_content):
+        changes = []
+        for change in changelist:
+            if 'range' in change:
+                start = parse_range(change['range']['start'])
+                end = parse_range(change['range']['end'])
+                new_text = change['text']
+                changes.append([start, end, new_text])
+            else:
+                return
+
+        debug(changes)
+
+        lines = old_content.splitlines()
+        new_lines = new_content.splitlines()
+
+        for change in changes:
+            lines = self.apply_edit(lines, change)
+
+        # debug('\n'.join(lines))
+        # debug('\n'.join(new_lines))
+        return lines == new_lines
 
 
 class VimWindow(Window):

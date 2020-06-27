@@ -187,6 +187,9 @@ class VimDocumentHandler(object):
                     if session.client and file_name in self._document_states and session.should_notify_did_change():
                         if session.text_sync_kind() == TextDocumentSyncKindIncremental:
                             notification = did_change(view, previous_content)
+                            assert self._editor.test_changes(
+                                notification.params.get('contentChanges'),
+                                previous_content, view.entire_content())
                         else:
                             # Full sync
                             notification = did_change(view)
