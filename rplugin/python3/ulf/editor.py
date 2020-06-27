@@ -91,12 +91,7 @@ class VimEditor(Editor):
             self.vim.funcs.bufload(bufnr)
             self.vim.api.buf_set_option(bufnr, 'buflisted', True)
 
-        buf_exists = bufnr != -1
-
-        if buf_exists:
-            buffer_lines = self.vim.funcs.readfile(file_path)
-        else:
-            buffer_lines = self.vim.buffers[bufnr][:]
+        buffer_lines = self.vim.buffers[bufnr][:]
 
         debug('applying changes to %s' % file_path)
 
@@ -106,9 +101,8 @@ class VimEditor(Editor):
         # buffer_lines = self.vim.api.buf_get_lines(bufnr, 0, -1, False)
         # self.vim.funcs.writefile(buffer_lines, file_path)
 
-        if buf_exists:
-            self.vim.api.buf_set_lines(bufnr, 0, -1, False, buffer_lines)
-            # self.vim.api.buf_set_option(bufnr, 'modified', False)
+        self.vim.api.buf_set_lines(bufnr, 0, -1, False, buffer_lines)
+        # self.vim.api.buf_set_option(bufnr, 'modified', False)
 
     def apply_edit(self, source_lines, edit) -> None:
         (start_line, start_col), (end_line, end_col), new_text = edit

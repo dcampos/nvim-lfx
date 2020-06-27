@@ -1,10 +1,29 @@
 from ..ulf import RequestHelper, ULF
 from ..core.views import text_document_position_params
-from ..core.protocol import Request, RequestMethod
+from ..core.protocol import RequestMethod
 from ..core.logging import debug
 from ..core.edit import parse_workspace_edit
 from ..core.typing import Dict, Any
 from pynvim import Nvim
+
+
+class PrepareRenameHelper(RequestHelper,
+                          method=RequestMethod.PREPARE_RENAME,
+                          capability='renameProvider'):
+
+    def is_enabled(self) -> bool:
+        view = self.current_view()
+        session = self.ulf.session_for_view(view, self.capability)
+        provider = session.get_capability(self.capability)
+        return provider and type(provider) == dict and provider.get('prepareProvider', False)
+
+    def params(self, options):
+        view = self.current_view()
+        point = self.cursor_point()
+        return text_document_position_params(view, point)
+
+    def handle_response(self, response):
+        debug(response)
 
 
 class RenameHelper(RequestHelper, method=RequestMethod.RENAME, capability='renameProvider'):

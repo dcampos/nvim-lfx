@@ -105,6 +105,7 @@ class RequestMethod(object):
     DECLARATION = "textDocument/declaration"
     IMPLEMENTATION = "textDocument/implementation"
     RENAME = "textDocument/rename"
+    PREPARE_RENAME = "textDocument/prepareRename"
     CODE_ACTION = "textDocument/codeAction"
     DOCUMENT_COLOR = "textDocument/documentColor"
     EXECUTE_COMMAND = "workspace/executeCommand"

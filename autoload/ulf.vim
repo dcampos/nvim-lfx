@@ -32,7 +32,32 @@ function! s:complete_symbols(arglead, line, pos) abort
 endfunction
 
 function! s:request_rename(new_name) abort
-    let l:new_name = a:new_name ==# '' ? input('New name: ') : a:new_name
+    unlet! g:ulf#prepare_rename#response
+
+    if empty(a:new_name)
+        let l:new_name = ''
+        call ULF_prepare_rename({'target': 'ulf#prepare_rename#response'}, v:true)
+        if exists('g:ulf#prepare_rename#response')
+            let response = g:ulf#prepare_rename#response
+            if type(response) == type(v:null)
+                echohl WarningMsg | echom 'Rename not possible here!' | echohl None
+                return
+            elseif type(response) ==# v:t_dict
+                if has_key(response, 'placeholder')
+                    let l:new_name = response.placeholder
+                elseif has_key(response, 'start')
+                    let startchar = response['start'].character
+                    let endchar = response['end'].character
+                    let line = getline('.')
+                    let l:new_name = strcharpart(line, startchar, endchar - startchar)
+                endif
+            endif
+        endif
+        let l:new_name = input('New name: ', l:new_name)
+    else
+        let l:new_name = a:new_name
+    endif
+
     if l:new_name !=# ''
         call ULF_rename({'new_name': l:new_name})
     endif

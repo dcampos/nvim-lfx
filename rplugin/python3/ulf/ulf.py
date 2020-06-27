@@ -182,6 +182,10 @@ class ULF:
     def rename(self, args):
         self._send_request(RequestMethod.RENAME, *args)
 
+    @pynvim.function('ULF_prepare_rename', sync=True)
+    def prepare_rename(self, args):
+        self._send_request(RequestMethod.PREPARE_RENAME, *args)
+
     @pynvim.function('ULF_format')
     def format(self, args):
         self._send_request(RequestMethod.FORMATTING, *args)
