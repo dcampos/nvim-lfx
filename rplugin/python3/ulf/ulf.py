@@ -136,71 +136,75 @@ class ULF:
 
     @pynvim.function('ULF_hover')
     def hover(self, args):
-        self.send_request(RequestMethod.HOVER, *args)
+        self._send_request(RequestMethod.HOVER, *args)
 
     @pynvim.function('ULF_signature_help')
     def signature_help(self, args):
-        self.send_request(RequestMethod.SIGNATURE_HELP, *args)
+        self._send_request(RequestMethod.SIGNATURE_HELP, *args)
 
     @pynvim.function('ULF_goto_definition')
     def goto_definition(self, args):
-        self.send_request(RequestMethod.DEFINITION, *args)
+        self._send_request(RequestMethod.DEFINITION, *args)
 
     @pynvim.function('ULF_goto_type_definition')
     def goto_type_definition(self, args):
-        self.send_request(RequestMethod.TYPE_DEFINITION, *args)
+        self._send_request(RequestMethod.TYPE_DEFINITION, *args)
 
     @pynvim.function('ULF_goto_implementation')
     def goto_implementation(self, args):
-        self.send_request(RequestMethod.IMPLEMENTATION, *args)
+        self._send_request(RequestMethod.IMPLEMENTATION, *args)
 
     @pynvim.function('ULF_goto_declaration')
     def goto_declaration(self, args):
-        self.send_request(RequestMethod.DECLARATION, *args)
+        self._send_request(RequestMethod.DECLARATION, *args)
 
     @pynvim.function('ULF_workspace_symbol', sync=True)
     def workspace_symbol(self, args):
-        self.send_request(RequestMethod.WORKSPACE_SYMBOL, *args)
+        self._send_request(RequestMethod.WORKSPACE_SYMBOL, *args)
 
     @pynvim.function('ULF_document_symbol', sync=True)
     def document_symbol(self, args):
-        self.send_request(RequestMethod.DOCUMENT_SYMBOL, *args)
+        self._send_request(RequestMethod.DOCUMENT_SYMBOL, *args)
 
     @pynvim.function('ULF_references')
     def references(self, args):
-        self.send_request(RequestMethod.REFERENCES, *args)
+        self._send_request(RequestMethod.REFERENCES, *args)
 
     @pynvim.function('ULF_document_highlight')
     def document_highlight(self, args):
-        self.send_request(RequestMethod.DOCUMENT_HIGHLIGHT, *args)
+        self._send_request(RequestMethod.DOCUMENT_HIGHLIGHT, *args)
 
     @pynvim.function('ULF_document_color')
     def document_color(self, args):
-        self.send_request(RequestMethod.DOCUMENT_COLOR, *args)
+        self._send_request(RequestMethod.DOCUMENT_COLOR, *args)
 
     @pynvim.function('ULF_rename')
     def rename(self, args):
-        self.send_request(RequestMethod.RENAME, *args)
+        self._send_request(RequestMethod.RENAME, *args)
 
     @pynvim.function('ULF_format')
     def format(self, args):
-        self.send_request(RequestMethod.FORMATTING, *args)
+        self._send_request(RequestMethod.FORMATTING, *args)
 
     @pynvim.function('ULF_format_range')
     def format_range(self, args):
-        self.send_request(RequestMethod.RANGE_FORMATTING, *args)
+        self._send_request(RequestMethod.RANGE_FORMATTING, *args)
 
     @pynvim.function('ULF_code_actions')
     def code_actions(self, args: List[Dict[str, Any]] = [{}]):
-        self.send_request(RequestMethod.CODE_ACTION, *args)
+        self._send_request(RequestMethod.CODE_ACTION, *args)
 
     @pynvim.function('ULF_complete')
     def complete(self, args: List[Dict[str, Any]] = [{}]):
-        self.send_request(RequestMethod.COMPLETION, *args)
+        self._send_request(RequestMethod.COMPLETION, *args)
 
     @pynvim.function('ULF_complete_sync', sync=True)
     def complete_sync(self, args: List[Dict[str, Any]] = [{}]):
-        self.send_request(RequestMethod.COMPLETION, *args)
+        self._send_request(RequestMethod.COMPLETION, *args)
+
+    @pynvim.function('ULF_resolve_completion', sync=True)
+    def resolve_completion(self, args: List[Dict[str, Any]] = [{}]):
+        self._send_request(RequestMethod.RESOLVE, *args)
 
     @pynvim.function('ULF_show_diagnostics')
     def show_diagnostics(self, args):
@@ -209,12 +213,19 @@ class ULF:
         if view:
             self.diagnostics_presenter.show_all(view.file_name())
 
-    @pynvim.function('ULF_send_request')
-    def send_request(self, method, opts={}, sync=False):
-        debug('send_request, method={}, opts={}, sync={}'.format(method, opts, sync))
+    @pynvim.function('ULF_send_request', sync=True)
+    def send_request(self, args,):
+        self._send_request(*args)
+
+    def _send_request(self, method, opts={}, sync=False):
+        debug('_send_request, method={}, opts={}, sync={}'.format(method, opts, sync))
         helper = RequestHelper.for_method(method)
         if helper:
             instance = helper.instance(self, self.vim)
+
+            if not instance.is_enabled():
+                return
+
             if sync:
                 instance.run_sync(opts)
             else:
@@ -282,11 +293,16 @@ class RequestHelper(metaclass=abc.ABCMeta):
         col = to_char_index(line_text, col)
         return Point(row, col)
 
+    def is_enabled(self) -> bool:
+        """Should check if the helper should by run."""
+        return True
+
     @property
     def capability(self) -> Optional[str]:
         """Needed capability for this request"""
         return self._capability
 
+    @abc.abstractmethod
     def params(self, *args, **kwargs) -> Optional[Dict[str, Any]]:
         """Prepare params for the request"""
         pass

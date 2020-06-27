@@ -8,6 +8,23 @@ from ..core.completion import parse_completion_response, completion_item_kind_na
 import json
 
 
+class ResolveCompletionHelper(RequestHelper,
+                              method=RequestMethod.RESOLVE,
+                              capability='completionProvider'):
+
+    def is_enabled(self) -> bool:
+        view = self.current_view()
+        session = self.ulf.session_for_view(view, self.capability)
+        provider = session.get_capability('completionProvider')
+        return provider and provider.get('resolveProvider', False)
+
+    def params(self, options):
+        return options.get('completion_item')
+
+    def handle_response(self, response):
+        pass
+
+
 class CompletionHelper(RequestHelper, method=RequestMethod.COMPLETION, capability='completionProvider'):
 
     def __init__(self, ulf, vim):

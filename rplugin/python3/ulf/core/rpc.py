@@ -267,7 +267,7 @@ class Client(object):
     def send_payload(self, payload: Dict[str, Any]) -> None:
         if self.transport:
             message = format_request(payload)
-            debug('===> ' + repr(message))
+            # debug('===> ' + repr(message))
             self.transport.send(message)
 
     def deduce_payload(
@@ -310,7 +310,7 @@ class Client(object):
         payload = None
         try:
             payload = json.loads(message)
-            debug('<=== ' + repr(payload))
+            # debug('<=== ' + repr(payload))
             # limit = min(len(message), 200)
             # debug("got json: ", message[0:limit], "...")
         except IOError as err:

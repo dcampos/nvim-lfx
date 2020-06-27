@@ -45,6 +45,8 @@ function! ulf#attach_buffer(bufnr) abort
         execute 'autocmd BufWritePost <buffer=' . a:bufnr . '> call ULF_handle_did_save()'
         execute 'autocmd TextChanged,TextChangedP,TextChangedI <buffer=' . a:bufnr
                     \ . '> call ULF_handle_did_change()'
+        execute 'autocmd CompleteChanged <buffer=' . a:bufnr
+                    \ . '> call s:resolve_completion(v:event.completed_item)'
     augroup END
 endfunction
 
@@ -73,6 +75,19 @@ endfunction
 function! ulf#completion_callback(items) abort
     let match_start = s:find_start() + 1
     call complete(match_start, a:items)
+endfunction
+
+function! s:resolve_completion(completed_item) abort
+    unlet g:ulf#completion#_resolved_item
+    let user_data = get(a:completed_item, 'user_data', {})
+    if type(user_data) !=# v:t_dict
+        let user_data = json_decode(user_data)
+    endif
+    let lspitem = get(user_data, 'lspitem')
+    if !empty(lspitem)
+        call ULF_resolve_completion({'target': 'ulf#completion#_resolved_item',
+                    \ 'completion_item': lspitem}, v:true)
+    endif
 endfunction
 
 function! s:find_start() abort
