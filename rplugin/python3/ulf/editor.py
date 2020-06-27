@@ -144,7 +144,7 @@ class VimEditor(Editor):
 
         # debug('\n'.join(lines))
         # debug('\n'.join(new_lines))
-        return lines == new_lines
+        assert lines == new_lines
 
 
 class VimWindow(Window):
