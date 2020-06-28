@@ -184,6 +184,8 @@ class VimWindow(Window):
 
     def find_open_file(self, path: str) -> Optional[View]:
         bufnr = self.vim.funcs.bufnr(path)
+        if bufnr == -1:
+            return None
         return VimView(self, bufnr)
 
     def active_view(self) -> Optional[View]:

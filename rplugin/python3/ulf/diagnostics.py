@@ -56,6 +56,10 @@ class DiagnosticsPresenter(object):
 
     def _show_results(self, file_path, diagnostics: List[Diagnostic]):
         view = self._window.find_open_file(file_path)
+
+        if not view:
+            return
+
         bufnr = view.buffer_id()
 
         loclist = []  # type: List[Dict[str, Any]]

@@ -19,6 +19,7 @@ class HoverHelper(RequestHelper, method=RequestMethod.HOVER, capability='hoverPr
     def handle_response(self, response):
         if response is not None:
             contents = response.get('contents')
+            markdown = False
             if not isinstance(contents, list):
                 contents = [contents]
             result = []
@@ -26,5 +27,9 @@ class HoverHelper(RequestHelper, method=RequestMethod.HOVER, capability='hoverPr
                 if isinstance(content, str):
                     result.append(content)
                 elif isinstance(content, dict):
+                    if content.get('kind') == 'markdown':
+                        markdown = True
                     result.append(content.get('value'))
-            self.vim.command('echon "{}"'.format('\n\n'.join(result).replace('"', '\\"')))
+            content = '\n\n'.join(result).split('\n')
+            self.vim.call('ulf#show_popup', content, markdown)
+            # self.vim.command('echon "{}"'.format('\n\n'.join(result).replace('"', '\\"')))

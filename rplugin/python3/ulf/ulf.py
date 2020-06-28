@@ -212,8 +212,10 @@ class ULF:
 
     @pynvim.function('ULF_show_diagnostics')
     def show_diagnostics(self, args):
-        bufnr = args[0]
-        view = self.window.view_for_buffer(int(bufnr))
+        bufnr = int(args[0])
+        if bufnr == -1:
+            return
+        view = self.window.view_for_buffer(bufnr)
         if view:
             self.diagnostics_presenter.show_all(view.file_name())
 

@@ -72,6 +72,8 @@ function! ulf#attach_buffer(bufnr) abort
                     \ . '> call ULF_handle_did_change()'
         execute 'autocmd CompleteChanged <buffer=' . a:bufnr
                     \ . '> call s:resolve_completion(v:event.completed_item)'
+        execute 'autocmd CursorMoved,CursorMovedI <buffer=' . a:bufnr
+                    \ . '> call s:close_popup()'
     augroup END
 endfunction
 
@@ -102,11 +104,33 @@ function! ulf#completion_callback(items) abort
     call complete(match_start, a:items)
 endfunction
 
+function! ulf#show_popup(content, markdown) abort
+    let filetype = a:markdown ==# v:true ? 'markdown' : 'text'
+    let content = a:content
+    if empty(content) | return | endif
+    call map(content, 'v:val ==# "" ? v:val : " " . v:val')
+    call insert(content, '')
+    let popup = ulf#popup#new(a:content, {
+                \ 'floating': 1,
+                \ 'filetype': filetype,
+                \ 'enter': v:false
+                \ })
+    call popup.open()
+    let b:__ulf_popup = popup
+endfunction
+
+function! s:close_popup() abort
+    call ulf#popup#close_current_popup()
+endfunction
+
 function! s:resolve_completion(completed_item) abort
     unlet! g:ulf#completion#_resolved_item
     let user_data = get(a:completed_item, 'user_data', {})
     if type(user_data) !=# v:t_dict
         silent! let user_data = json_decode(user_data)
+    endif
+    if type(user_data) !=# v:t_dict
+        return
     endif
     let lspitem = get(user_data, 'lspitem')
     if !empty(lspitem)

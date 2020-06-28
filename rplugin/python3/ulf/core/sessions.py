@@ -20,8 +20,7 @@ def get_initialize_params(workspace_folders: List[WorkspaceFolder], config: Clie
                 "willSaveWaitUntil": True
             },
             "hover": {
-                "contentFormat": ["plaintext"]
-                # "contentFormat": ["markdown", "plaintext"]
+                "contentFormat": ["markdown", "plaintext"]
             },
             "completion": {
                 "completionItem": {
