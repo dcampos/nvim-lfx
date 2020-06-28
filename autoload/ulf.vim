@@ -107,7 +107,7 @@ endfunction
 function! ulf#show_popup(content, markdown) abort
     let filetype = a:markdown ==# v:true ? 'markdown' : 'text'
     let content = a:content
-    if empty(content) | return | endif
+    if empty(content) || content == [''] | return | endif
     call map(content, 'v:val ==# "" ? v:val : " " . v:val')
     call insert(content, '')
     let popup = ulf#popup#new(a:content, {
