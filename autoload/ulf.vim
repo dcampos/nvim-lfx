@@ -106,7 +106,7 @@ function! s:resolve_completion(completed_item) abort
     unlet! g:ulf#completion#_resolved_item
     let user_data = get(a:completed_item, 'user_data', {})
     if type(user_data) !=# v:t_dict
-        let user_data = json_decode(user_data)
+        silent! let user_data = json_decode(user_data)
     endif
     let lspitem = get(user_data, 'lspitem')
     if !empty(lspitem)
