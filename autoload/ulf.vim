@@ -103,7 +103,7 @@ function! ulf#completion_callback(items) abort
 endfunction
 
 function! s:resolve_completion(completed_item) abort
-    unlet g:ulf#completion#_resolved_item
+    unlet! g:ulf#completion#_resolved_item
     let user_data = get(a:completed_item, 'user_data', {})
     if type(user_data) !=# v:t_dict
         let user_data = json_decode(user_data)
