@@ -72,7 +72,7 @@ function! ulf#attach_buffer(bufnr) abort
                     \ . '> call ULF_handle_did_change()'
         execute 'autocmd CompleteChanged <buffer=' . a:bufnr
                     \ . '> call s:resolve_completion(v:event.completed_item)'
-        execute 'autocmd CursorMoved,CursorMovedI <buffer=' . a:bufnr
+        execute 'autocmd CursorMoved,CursorMovedI,BufLeave,BufWinLeave <buffer=' . a:bufnr
                     \ . '> call s:close_popup()'
     augroup END
 endfunction
