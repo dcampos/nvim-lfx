@@ -134,16 +134,16 @@ class VimEditor(Editor):
             else:
                 return
 
-        debug(changes)
+        # debug(changes)
 
-        lines = old_content.splitlines()
-        new_lines = new_content.splitlines()
+        lines = re.split(r'(?:\r?\n)', old_content)
+        new_lines = re.split(r'(?:\r?\n)', new_content)
 
         for change in changes:
             lines = self.apply_edit(lines, change)
 
-        # debug('\n'.join(lines))
-        # debug('\n'.join(new_lines))
+        # debug('\n' + '\n'.join(f'{i: 3d}: {n}' for i, n in enumerate(lines)))
+        # debug('\n' + '\n'.join(f'{i: 3d}: {n}' for i, n in enumerate(new_lines)))
         assert lines == new_lines
 
 

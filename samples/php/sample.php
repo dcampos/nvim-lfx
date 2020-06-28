@@ -15,4 +15,3 @@ function no_params() {
 
 function multi_params($parama, $paramb, $paramc=null) {
 }
-
