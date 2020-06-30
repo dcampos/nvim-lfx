@@ -22,14 +22,28 @@ class SignatureHelpHelper(RequestHelper, method=RequestMethod.SIGNATURE_HELP, ca
             return
         active_signature = signature_help.active_signature()
         cmd = 'echo "" | '
+        pre, label, post = '', '', ''
         if active_signature.parameters and signature_help._active_parameter_index in range(
                 0, len(active_signature.parameters)):
             parameter = active_signature.parameters[signature_help._active_parameter_index]
             start, end = parameter.range
-            cmd += 'echon "{}" | '.format(active_signature.label[:start].replace('"', '\\"'))
-            cmd += 'echohl WarningMsg | echon "{}" | echohl None | '.format(
-                parameter.label.replace('"', '\\"'))
-            cmd += 'echon "{}"'.format(active_signature.label[end:].replace('"', '\\"'))
+            pre = active_signature.label[:start]
+            label = parameter.label
+            post = active_signature.label[end:]
+            # cmd += 'echon "{}" | '.format(active_signature.label[:start].replace('"', '\\"'))
+            # cmd += 'echohl WarningMsg | echon "{}" | echohl None | '.format(
+            #     parameter.label.replace('"', '\\"'))
+            # cmd += 'echon "{}"'.format(active_signature.label[end:].replace('"', '\\"'))
         else:
             cmd += 'echon "{}"'.format(active_signature.label.replace('"', '\\"'))
-        self.vim.command(cmd)
+            pre = active_signature.label
+
+        if self.vim.vars.get('ulf#signature_help#use_echo'):
+            cmd += 'echon "{}" | '.format(pre.replace('"', '\\"'))
+            cmd += 'echohl WarningMsg | echon "{}" | echohl None | '.format(
+                 label.replace('"', '\\"'))
+            cmd += 'echon "{}"'.format(post.replace('"', '\\"'))
+            self.vim.command(cmd)
+        else:
+            content = '{}***{}***{}'.format(pre, label, post)
+            self.vim.call('ulf#show_popup', [content], True, True)

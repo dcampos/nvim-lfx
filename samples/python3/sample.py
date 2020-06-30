@@ -15,11 +15,30 @@ def hello(name: str= "João", greeting: str = "Hello", foo: str = ...):
     foo = 123
     print("{}, {}!".format(greeting, name))
 
-hello("You", "Hi")
-
 def with_params(param: str, paramb: int, paramc: str = None):
     print(f'param={param}')
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+hello(
 
 
 #child = Child()

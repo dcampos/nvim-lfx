@@ -70,9 +70,11 @@ function! ulf#attach_buffer(bufnr) abort
         execute 'autocmd BufWritePost <buffer=' . a:bufnr . '> call ULF_handle_did_save()'
         execute 'autocmd TextChanged,TextChangedP,TextChangedI <buffer=' . a:bufnr
                     \ . '> call ULF_handle_did_change()'
+        execute 'autocmd CompleteDone <buffer=' . a:bufnr
+                    \ . '> call s:handle_complete_done()'
         execute 'autocmd CompleteChanged <buffer=' . a:bufnr
-                    \ . '> call s:resolve_completion(v:event.completed_item)'
-        execute 'autocmd CursorMoved,CursorMovedI,BufLeave,BufWinLeave <buffer=' . a:bufnr
+                    \ . '> call s:handle_complete_changed(v:event)'
+        execute 'autocmd CursorMoved,InsertEnter <buffer=' . a:bufnr
                     \ . '> call s:close_popup()'
     augroup END
 endfunction
@@ -104,7 +106,7 @@ function! ulf#completion_callback(items) abort
     call complete(match_start, a:items)
 endfunction
 
-function! ulf#show_popup(content, markdown) abort
+function! ulf#show_popup(content, markdown, prefer_top) abort
     let filetype = a:markdown ==# v:true ? 'markdown' : 'text'
     let content = a:content
     if empty(content) || content == [''] | return | endif
@@ -113,7 +115,8 @@ function! ulf#show_popup(content, markdown) abort
     let popup = ulf#popup#new(a:content, {
                 \ 'floating': 1,
                 \ 'filetype': filetype,
-                \ 'enter': v:false
+                \ 'enter': v:false,
+                \ 'prefer_top': a:prefer_top
                 \ })
     call popup.open()
     let b:__ulf_popup = popup
@@ -121,6 +124,22 @@ endfunction
 
 function! s:close_popup() abort
     call ulf#popup#close_current_popup()
+endfunction
+
+function! s:handle_complete_done() abort
+    unlet! b:__ulf_pmenu_info
+endfunction
+
+function! s:handle_complete_changed(event) abort
+    let b:__ulf_pmenu_info = {
+                \ 'width': a:event.width,
+                \ 'height': a:event.height,
+                \ 'col': a:event.col,
+                \ 'row': a:event.row
+                \ }
+    if exists('b:__ulf_popup')
+        call timer_start(1, {->b:__ulf_popup.update()})
+    endif
 endfunction
 
 function! s:resolve_completion(completed_item) abort

@@ -31,5 +31,5 @@ class HoverHelper(RequestHelper, method=RequestMethod.HOVER, capability='hoverPr
                         markdown = True
                     result.append(content.get('value'))
             content = '\n\n'.join(result).split('\n')
-            self.vim.call('ulf#show_popup', content, markdown)
+            self.vim.call('ulf#show_popup', content, markdown, True)
             # self.vim.command('echon "{}"'.format('\n\n'.join(result).replace('"', '\\"')))

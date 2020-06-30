@@ -90,7 +90,16 @@ endfunction
 let s:popup.window_size = funcref('s:popup__window_size')
 
 function! s:popup__floating_win_opts(width, height) dict abort
-    if self.opened_at[0] + a:height <= &lines
+    if exists('b:__ulf_pmenu_info')
+        let pum_height = b:__ulf_pmenu_info.height
+        let pum_row = b:__ulf_pmenu_info.row
+        let pum_col = b:__ulf_pmenu_info.col
+    endif
+
+    let has_space_below = self.opened_at[0] + a:height <= &lines
+    let has_space_above = self.opened_at[0] - a:height > 0
+
+    if !self.prefer_top && has_space_below || self.prefer_top && !has_space_above
         let vert = 'N'
         let row = self.opened_at[0]
     else
@@ -98,12 +107,20 @@ function! s:popup__floating_win_opts(width, height) dict abort
         let row = self.opened_at[0] - 1
     endif
 
+    let hor = 'W'
+
     if self.opened_at[1] + a:width <= &columns
-        let hor = 'W'
         let col = self.opened_at[1] - 1
     else
-        let hor = 'E'
-        let col = self.opened_at[1]
+        let col = &columns - a:width
+    endif
+
+    if pumvisible()
+        if pum_row < self.opened_at[0] && vert == 'S'
+            let row -= pum_height
+        elseif pum_row > self.opened_at[0] && vert == 'N'
+            let row += pum_height
+        endif
     endif
 
     return {
@@ -137,6 +154,7 @@ function! s:popup__open() dict abort
     let self.opener_bufnr = bufnr('%')
     let self.opener_winid = win_getid()
     let self.type = s:floating_window_available ? 'floating' : 'preview'
+    let self.prefer_top = get(self.opts, 'prefer_top', v:false)
 
     let [width, height] = self.window_size()
 
