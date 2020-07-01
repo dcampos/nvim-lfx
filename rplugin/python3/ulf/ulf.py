@@ -195,7 +195,7 @@ class ULF:
         self._send_request(RequestMethod.RANGE_FORMATTING, *args)
 
     @pynvim.function('ULF_code_actions')
-    def code_actions(self, args: List[Dict[str, Any]] = [{}]):
+    def code_actions(self, args):
         self._send_request(RequestMethod.CODE_ACTION, *args)
 
     @pynvim.function('ULF_complete')
@@ -308,10 +308,9 @@ class RequestHelper(metaclass=abc.ABCMeta):
         """Needed capability for this request"""
         return self._capability
 
-    @abc.abstractmethod
     def params(self, *args, **kwargs) -> Optional[Dict[str, Any]]:
         """Prepare params for the request"""
-        pass
+        return None
 
     def run(self, options: Dict[str, Any] = {}):
         params = self.params(options)
