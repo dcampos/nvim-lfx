@@ -4,6 +4,7 @@ from ..core.protocol import RequestMethod
 # from ..core.logging import debug
 from ..core.signature_help import create_signature_help
 from ..core.views import text_document_position_params
+from ..util import to_byte_index
 
 
 class SignatureHelpHelper(RequestHelper, method=RequestMethod.SIGNATURE_HELP, capability='signatureHelpProvider'):
@@ -30,20 +31,23 @@ class SignatureHelpHelper(RequestHelper, method=RequestMethod.SIGNATURE_HELP, ca
             pre = active_signature.label[:start]
             label = parameter.label
             post = active_signature.label[end:]
-            # cmd += 'echon "{}" | '.format(active_signature.label[:start].replace('"', '\\"'))
-            # cmd += 'echohl WarningMsg | echon "{}" | echohl None | '.format(
-            #     parameter.label.replace('"', '\\"'))
-            # cmd += 'echon "{}"'.format(active_signature.label[end:].replace('"', '\\"'))
         else:
             cmd += 'echon "{}"'.format(active_signature.label.replace('"', '\\"'))
             pre = active_signature.label
 
         if self.vim.vars.get('ulf#signature_help#use_echo'):
             cmd += 'echon "{}" | '.format(pre.replace('"', '\\"'))
-            cmd += 'echohl WarningMsg | echon "{}" | echohl None | '.format(
+            cmd += 'echohl ULFActiveParameter | echon "{}" | echohl None | '.format(
                  label.replace('"', '\\"'))
             cmd += 'echon "{}"'.format(post.replace('"', '\\"'))
             self.vim.command(cmd)
         else:
-            content = '{}***{}***{}'.format(pre, label, post)
-            self.vim.call('ulf#show_popup', [content], True, True)
+            content = '{}{}{}'.format(pre, label, post)
+            highlights = []
+            if start and end:
+                highlights.append(['ULFActiveParameter', 0,
+                                   to_byte_index(content, start) + 1,
+                                   to_byte_index(content, end) + 1])
+            self.vim.call('ulf#show_popup', [content], {'prefer_top': True,
+                                                        'paddings': [1, 0],
+                                                        'highlights': highlights})

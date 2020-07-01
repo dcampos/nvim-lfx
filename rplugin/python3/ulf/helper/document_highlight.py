@@ -5,11 +5,13 @@ from ..core.typing import Dict, Any
 from ..core.views import text_document_position_params
 
 
-class DocumentHighlightHelper(RequestHelper, method=RequestMethod.DOCUMENT_HIGHLIGHT, capability='documentHighlightProvider'):
+class DocumentHighlightHelper(RequestHelper,
+                              method=RequestMethod.DOCUMENT_HIGHLIGHT,
+                              capability='documentHighlightProvider'):
 
     def __init__(self, ulf, vim, *args, **kwargs) -> None:
         super().__init__(ulf, vim)
-        self.symbol_hl_id = self.vim.new_highlight_source()
+        self.symbol_hl_id = self.vim.api.create_namespace('ulf#document_highlight#ns_id')
 
     def params(self, options) -> Dict[str, Any]:
         view = self.current_view()

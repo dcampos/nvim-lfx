@@ -1,3 +1,9 @@
+"=============================================================================
+" File: autoload/ulf.vim
+" License: MIT
+" Description: autoload'able functions for ULF.
+"=============================================================================
+
 let g:ulf#completion_results = []
 
 function! ulf#enable() abort
@@ -21,6 +27,8 @@ function! ulf#enable() abort
     command! -nargs=? ULFRename call s:request_rename(<q-args>)
     command! ULFCodeActions call ULF_code_actions({'visual': v:false})
     command! ULFCodeActionsVisual call ULF_code_actions({'visual': v:true})
+
+    hi default ULFActiveParameter gui=bold,underline
 endfunction
 
 function! s:complete_symbols(arglead, line, pos) abort
@@ -106,18 +114,13 @@ function! ulf#completion_callback(items) abort
     call complete(match_start, a:items)
 endfunction
 
-function! ulf#show_popup(content, markdown, prefer_top) abort
-    let filetype = a:markdown ==# v:true ? 'markdown' : 'text'
+function! ulf#show_popup(content, opts) abort
     let content = a:content
     if empty(content) || content == [''] | return | endif
-    call map(content, 'v:val ==# "" ? v:val : " " . v:val')
-    call insert(content, '')
-    let popup = ulf#popup#new(a:content, {
+    let popup = ulf#popup#new(a:content, extend({
                 \ 'floating': 1,
-                \ 'filetype': filetype,
                 \ 'enter': v:false,
-                \ 'prefer_top': a:prefer_top
-                \ })
+                \ }, a:opts))
     call popup.open()
     let b:__ulf_popup = popup
 endfunction

@@ -1,3 +1,10 @@
+"=============================================================================
+" File: autoload/ulf/popup.vim
+" License: MIT
+" Description: popup functions for ULF.
+" Origin: Copied and adapted from gitmessenger.vim.
+"=============================================================================
+
 let s:popup = {}
 let s:floating_window_available = has('nvim') && exists('*nvim_win_set_config')
 
@@ -60,7 +67,7 @@ function! s:popup__window_size() dict abort
     let has_max_width = exists('g:ulf#popup#max_width') && type(g:ulf#popup#max_width) == v:t_number
     if has_max_width
         " ` - 1` for considering right margin
-        let max_width = g:ulf#popup#max_width - 1
+        let max_width = g:ulf#popup#max_width - self.opts.paddings[0]
     endif
 
     let width = 0
@@ -77,8 +84,8 @@ function! s:popup__window_size() dict abort
         endif
         let height += 1
     endfor
-    let width += 1 " right margin
-    let height += 1 " bottom margin
+    " right margin
+    let width += self.opts.paddings[0]
 
     let has_max_height = exists('g:ulf#popup#max_height') && type(g:ulf#popup#max_height) == v:t_number
     if has_max_height && height > g:ulf#popup#max_height
@@ -148,6 +155,18 @@ function! s:popup__get_opener_winnr() dict abort
 endfunction
 let s:popup.get_opener_winnr = funcref('s:popup__get_opener_winnr')
 
+function! s:popup__apply_highlights() dict abort
+    let ns_id = nvim_create_namespace('ulf#popup#ns_id')
+    call nvim_buf_clear_namespace(self.bufnr, ns_id, 0, -1)
+    if has_key(self.opts, 'highlights')
+        for highlight in self.opts.highlights
+            let [group, line, startcol, endcol] = highlight
+            call nvim_buf_add_highlight(self.bufnr, ns_id, group, line, startcol, endcol)
+        endfor
+    endif
+endfunction
+let s:popup.apply_highlights = funcref('s:popup__apply_highlights')
+
 function! s:popup__open() dict abort
     let pos = win_screenpos('.')
     let self.opened_at = [pos[0] + winline() - 1, pos[1] + wincol() - 1]
@@ -214,6 +233,8 @@ function! s:popup__open() dict abort
 
     let self.bufnr = popup_bufnr
     let self.win_id = win_id
+
+    call self.apply_highlights()
 endfunction
 let s:popup.open = funcref('s:popup__open')
 
@@ -261,6 +282,8 @@ function! s:popup__update() dict abort
         silent %delete _
         call setline(1, self.contents)
         setlocal nomodified nomodifiable
+
+        call self.apply_highlights()
     finally
         if winnr() != prev_winnr
             noautocmd execute prev_winnr . 'wincmd w'
@@ -289,6 +312,21 @@ function! s:popup__echo_help() dict abort
 endfunction
 let s:popup.echo_help = funcref('s:popup__echo_help')
 
+function! s:popup__pad_content() dict abort
+    let [hor, ver] = get(self.opts, 'paddings', [1, 1])
+    if empty(self.contents) || self.contents == ['']
+        return
+    endif
+
+    " Left padding
+    call map(self.contents, 'empty(v:val) ? v:val : repeat(" ", hor) . v:val')
+    " Top padding
+    call extend(self.contents, repeat([''], ver), 0)
+    " Bottom padding
+    call extend(self.contents, repeat([''], ver))
+endfunction
+let s:popup.pad_content = funcref('s:popup__pad_content')
+
 " contents: string[] // lines of contents
 " opts: {
 "   floating?: boolean;
@@ -299,14 +337,17 @@ let s:popup.echo_help = funcref('s:popup__echo_help')
 "   mappings?: {
 "     [keyseq: string]: [() => void, string];
 "   };
-"   enter?: boolean
+"   enter?: boolean;
+"   prefer_top?: boolean;
+"   paddings?: [number, number]
 " }
 function! ulf#popup#new(contents, opts) abort
     let p = deepcopy(s:popup)
-    let opts = { 'floating': v:true }
+    let opts = { 'floating': v:true, 'paddings': [1, 1] }
     call extend(opts, a:opts)
     let p.opts = opts
     let p.contents = a:contents
+    call p.pad_content()
     return p
 endfunction
 

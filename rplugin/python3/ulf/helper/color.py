@@ -12,7 +12,7 @@ class DocumentColorHelper(RequestHelper, method=RequestMethod.DOCUMENT_COLOR, ca
 
     def __init__(self, ulf, vim, *args, **kwargs) -> None:
         super().__init__(ulf, vim)
-        self.color_hl_id = self.vim.new_highlight_source()
+        self.color_hl_id = self.vim.api.create_namespace('ulf#document_color#ns_id')
 
     def params(self, options) -> Dict[str, Any]:
         view = self.current_view()
