@@ -12,6 +12,7 @@ from .core.logging import set_log_file, set_debug_logging, set_exception_logging
 from .core.workspace import ProjectFolders
 from .core.diagnostics import DiagnosticsStorage
 from .core.rpc import Client
+from .core.clients import get_window_env
 from .documents import VimDocumentHandler, VimConfigManager
 from .editor import VimEditor, VimWindow, VimView
 from .context import ContextManager
@@ -52,10 +53,11 @@ class ULF:
                           on_post_initialize: Callable[[Session], None],
                           on_post_exit: Callable[[str], None],
                           on_stderr_log: Optional[Callable[[str], None]]) -> Optional[Session]:
+            _, env = get_window_env(window, config)
             return create_session(
                 config=config,
                 workspace_folders=workspace_folders,
-                env=dict(),
+                env=env,
                 settings=settings,
                 on_pre_initialize=on_pre_initialize,
                 on_post_initialize=lambda session: self.vim.async_call(on_post_initialize, session),
