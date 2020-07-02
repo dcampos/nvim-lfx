@@ -27,6 +27,8 @@ function! ulf#enable() abort
     command! -nargs=? ULFRename call s:request_rename(<q-args>)
     command! ULFCodeActions call ULF_code_actions({'visual': v:false})
     command! ULFCodeActionsVisual call ULF_code_actions({'visual': v:true})
+    command! ULFFormat call ULF_format()
+    command! ULFFormatRange call ULF_format_range()
 
     hi default ULFActiveParameter gui=bold,underline
 endfunction
