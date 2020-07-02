@@ -54,13 +54,22 @@ class SignatureHelpHelper(RequestHelper, method=RequestMethod.SIGNATURE_HELP, ca
                                                         'highlights': highlights})
 
     def calculate_offset(self, content: str, start: int) -> int:
-        trigger_offset = self._find_last_trigger(content, 0, start)
+        session = self.ulf.session_for_view(self.current_view(), self.capability)
+        options = session.get_capability(self.capability)
+        if type(options) == dict:
+            triggers = options.get('triggers', '(,')
+
+        # Position of the last trigger before current parameter
+        # It doesn't need to be converted to byte index
+        trigger_offset = self._find_last_trigger(content, 0, start, triggers)
 
         offset = -start + (start - 1 - trigger_offset) - 1  # final -1 for padding
 
         line = self.vim.current.line
         row, col = self.vim.current.window.cursor
-        trigger_index = self._find_last_trigger(line, 0, col)
+
+        # Position of the last trigger before cursor
+        trigger_index = to_byte_index(line, self._find_last_trigger(line, 0, col, triggers))
 
         if trigger_index >= 0:
             offset -= col - trigger_index - 1
