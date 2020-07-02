@@ -116,11 +116,13 @@ function! s:popup__floating_win_opts(width, height) dict abort
 
     let hor = 'W'
 
-    if self.opened_at[1] + a:width <= &columns
-        let col = self.opened_at[1] - 1
-    else
-        let col = &columns - a:width
-    endif
+    let [col_offset, row_offset] = get(self.opts, 'offsets', [0, 0])
+
+    " if self.opened_at[1] + a:width <= &columns
+        let col = self.opened_at[1] - 1 + col_offset
+    " else
+    "     let col = &columns - a:width + col_offset
+    " endif
 
     if pumvisible()
         if pum_row < self.opened_at[0] && vert == 'S'
