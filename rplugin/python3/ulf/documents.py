@@ -182,19 +182,20 @@ class VimDocumentHandler(object):
                 if self._document_states[file_name][0] == view.change_count():
                     return
                 previous_content = self._document_states[file_name][1]
+                content = view.entire_content()
                 # mypy: expected editor.View, got View
                 for session in self._get_applicable_sessions(view):
                     if session.client and file_name in self._document_states and session.should_notify_did_change():
                         if session.text_sync_kind() == TextDocumentSyncKindIncremental:
-                            notification = did_change(view, previous_content)
+                            notification = did_change(view, content, previous_content)
                             self._editor.test_changes(
                                 notification.params.get('contentChanges'),
-                                previous_content, view.entire_content())
+                                previous_content, content)
                         else:
                             # Full sync
-                            notification = did_change(view)
+                            notification = did_change(view, content)
                         session.client.send_notification(notification)
-                self._document_states[file_name] = view.change_count(), view.entire_content()
+                self._document_states[file_name] = view.change_count(), content
 
 
 class VimConfigManager(object):

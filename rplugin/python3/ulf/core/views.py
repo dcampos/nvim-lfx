@@ -48,10 +48,10 @@ def did_open_text_document_params(view: View, language_id: str) -> Dict[str, Any
     return {"textDocument": text_document_item(view, language_id)}
 
 
-def did_change_text_document_params(view: View, previous_content: str = '') -> Dict[str, Any]:
+def did_change_text_document_params(view: View, content, previous_content: str = '') -> Dict[str, Any]:
     return {
         "textDocument": versioned_text_document_identifier(view),
-        "contentChanges": content_changes(previous_content, view.entire_content())
+        "contentChanges": content_changes(previous_content, content)
     }
 
 
@@ -74,8 +74,8 @@ def did_open(view: View, language_id: str) -> Notification:
     return Notification.didOpen(did_open_text_document_params(view, language_id))
 
 
-def did_change(view: View, previous_content: str = None) -> Notification:
-    return Notification.didChange(did_change_text_document_params(view, previous_content))
+def did_change(view: View, content, previous_content: str = None) -> Notification:
+    return Notification.didChange(did_change_text_document_params(view, content, previous_content))
 
 
 def will_save(view: View, reason: int) -> Notification:
