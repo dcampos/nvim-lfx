@@ -27,11 +27,11 @@ class ULF:
         self.vim = vim
         vars = self.vim.vars
         self.settings = settings
-        self.settings.log_debug = True
-        self.settings.log_payloads = True
-        self.settings.log_server = True
-        self.settings.log_stderr = True
-        self.log_file = vars.get('ulf#log_file', '/tmp/ulf.log')
+        self.settings.log_debug = vars.get('ulf#log#debug', True)
+        self.settings.log_payloads = vars.get('ulf#log#payloads', False)
+        self.settings.log_server = vars.get('ulf#log#server', False)
+        self.settings.log_stderr = vars.get('ulf#log#stderr', True)
+        self.log_file = vars.get('ulf#log#file')
         set_log_file(self.log_file)
         set_exception_logging(True)
         set_debug_logging(True)
@@ -124,7 +124,7 @@ class ULF:
             return
 
         view = self.window.view_for_buffer(int(bufnr), False)
-        debug("Event: did_close - %s - %s" % (bufnr, view))
+        debug("Event: did_close - %s" % (bufnr))
 
         if view:
             self.manager.handle_view_closed(view)

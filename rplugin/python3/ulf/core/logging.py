@@ -11,6 +11,8 @@ logger = None
 
 
 def set_log_file(file: str) -> None:
+    if file is None:
+        return
     global log_file
     log_file = file
     setup_log()

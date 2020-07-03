@@ -1,7 +1,7 @@
 from ..ulf import RequestHelper
-from ..core.typing import Any, Dict, Tuple
+from ..core.typing import Any, Dict, Iterable
 from ..core.protocol import RequestMethod
-from ..core.logging import debug
+# from ..core.logging import debug
 from ..core.signature_help import create_signature_help
 from ..core.views import text_document_position_params
 from ..util import to_byte_index
@@ -47,13 +47,13 @@ class SignatureHelpHelper(RequestHelper, method=RequestMethod.SIGNATURE_HELP, ca
                 highlights.append(['ULFActiveParameter', 0,
                                    to_byte_index(content, start) + 1,
                                    to_byte_index(content, end) + 1])
-            offset = self.calculate_offset(content, start)
+            offset = self._calculate_offset(content, start)
             self.vim.call('ulf#show_popup', [content], {'prefer_top': True,
                                                         'offsets': [offset, 0],
                                                         'paddings': [1, 0],
                                                         'highlights': highlights})
 
-    def calculate_offset(self, content: str, start: int) -> int:
+    def _calculate_offset(self, content: str, start: int) -> int:
         session = self.ulf.session_for_view(self.current_view(), self.capability)
         options = session.get_capability(self.capability)
         if type(options) == dict:
@@ -78,5 +78,6 @@ class SignatureHelpHelper(RequestHelper, method=RequestMethod.SIGNATURE_HELP, ca
 
         return offset
 
-    def _find_last_trigger(self, line, start: int = 0, end: int = -1, triggers='(,') -> int:
+    def _find_last_trigger(self, line: str, start: int = 0, end: int = -1,
+                           triggers: Iterable = '(,') -> int:
         return max(line.rfind(c, start, end) for c in triggers)
