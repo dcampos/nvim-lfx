@@ -13,6 +13,7 @@ from .core.workspace import ProjectFolders
 from .core.diagnostics import DiagnosticsStorage
 from .core.rpc import Client
 from .core.clients import get_window_env
+from .core.edit import parse_text_edit, sort_by_application_order
 from .documents import VimDocumentHandler, VimConfigManager
 from .editor import VimEditor, VimWindow, VimView
 from .context import ContextManager
@@ -135,6 +136,16 @@ class ULF:
     def _on_vimleave(self, args):
         self.window.valid = False
         self.manager.end_sessions()
+
+    @pynvim.function('ULF_handle_complete_done', sync=True)
+    def _on_complete_done(self, args):
+        resolved_item = self.vim.vars.get('ulf#completion#_resolved_item')
+        if resolved_item:
+            view = self.window.active_view()
+            edits = resolved_item.get('additionalTextEdits')
+            if edits:
+                edits = sort_by_application_order(map(parse_text_edit, edits))
+                self.editor.apply_document_edits(view.file_name(), edits)
 
     @pynvim.function('ULF_hover')
     def hover(self, args):

@@ -133,6 +133,7 @@ endfunction
 
 function! s:handle_complete_done() abort
     unlet! b:__ulf_pmenu_info
+    call ULF_handle_complete_done()
 endfunction
 
 function! s:handle_complete_changed(event) abort
@@ -145,6 +146,7 @@ function! s:handle_complete_changed(event) abort
     if exists('b:__ulf_popup')
         call timer_start(1, {->b:__ulf_popup.update()})
     endif
+    call s:resolve_completion(a:event.completed_item)
 endfunction
 
 function! s:resolve_completion(completed_item) abort

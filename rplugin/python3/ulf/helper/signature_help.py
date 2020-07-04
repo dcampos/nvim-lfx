@@ -43,11 +43,12 @@ class SignatureHelpHelper(RequestHelper, method=RequestMethod.SIGNATURE_HELP, ca
         else:
             content = '{}{}{}'.format(pre, label, post)
             highlights = []
+            offset = 0
             if start and end:
                 highlights.append(['ULFActiveParameter', 0,
                                    to_byte_index(content, start) + 1,
                                    to_byte_index(content, end) + 1])
-            offset = self._calculate_offset(content, start)
+                offset = self._calculate_offset(content, start)
             self.vim.call('ulf#show_popup', [content], {'prefer_top': True,
                                                         'offsets': [offset, 0],
                                                         'paddings': [1, 0],

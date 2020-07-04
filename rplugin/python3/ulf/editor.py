@@ -21,8 +21,8 @@ class VimEditor(Editor):
         self.vim: Nvim = self.ulf.vim
         self.window = VimWindow(self)
         # TODO: transfer these to the helpers once they are single instances
-        self.symbol_hl_id = self.vim.new_highlight_source()
-        self.color_hl_id = self.vim.new_highlight_source()
+        # self.symbol_hl_id = self.vim.new_highlight_source()
+        # self.color_hl_id = self.vim.new_highlight_source()
 
     def set_timeout_async(self, f: Callable, timeout_ms: int = 0) -> None:
         timer = Timer(timeout_ms / 1000, lambda: self.vim.async_call(f))
@@ -93,20 +93,21 @@ class VimEditor(Editor):
             self.vim.funcs.bufload(bufnr)
             self.vim.api.buf_set_option(bufnr, 'buflisted', True)
 
-        buffer_lines = self.vim.buffers[bufnr][:]
-
         debug('applying changes to %s' % file_path)
 
         for change in reversed(changes):
-            buffer_lines = self.apply_edit(buffer_lines, change)
+            buffer_lines = self.vim.buffers[bufnr][:]
+            start, end, new_lines = self.apply_edit(buffer_lines, change)
+            self.vim.api.buf_set_lines(bufnr, start, end+1, False, new_lines)
 
         # buffer_lines = self.vim.api.buf_get_lines(bufnr, 0, -1, False)
         # self.vim.funcs.writefile(buffer_lines, file_path)
 
-        self.vim.api.buf_set_lines(bufnr, 0, -1, False, buffer_lines)
+        # self.vim.api.buf_set_lines(bufnr, 0, -1, False, buffer_lines)
         # self.vim.api.buf_set_option(bufnr, 'modified', False)
 
-    def apply_edit(self, source_lines, edit) -> None:
+    # TODO: change tests
+    def apply_edit(self, source_lines, edit):
         (start_line, start_col), (end_line, end_col), new_text = edit
 
         text_before = (source_lines[start_line][:start_col]
@@ -119,9 +120,9 @@ class VimEditor(Editor):
         # Not using splitlines in order to keep empty ending lines
         new_lines = re.split(r'(?:\r?\n)', new_text)
 
-        source_lines[start_line:end_line + 1] = new_lines
+        # source_lines[start_line:end_line + 1] = new_lines
 
-        return source_lines
+        return start_line, end_line, new_lines
 
     def test_changes(self, changelist, old_content, new_content):
         changes = []
@@ -140,7 +141,8 @@ class VimEditor(Editor):
         new_lines = re.split(r'(?:\r?\n)', new_content)
 
         for change in changes:
-            lines = self.apply_edit(lines, change)
+            start_line, end_line, changed = self.apply_edit(lines, change)
+            lines[start_line:end_line + 1] = changed
 
         # debug('\n' + '\n'.join(f'{i: 3d}: {n}' for i, n in enumerate(lines)))
         # debug('\n' + '\n'.join(f'{i: 3d}: {n}' for i, n in enumerate(new_lines)))
