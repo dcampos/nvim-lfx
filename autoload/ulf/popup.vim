@@ -157,13 +157,13 @@ function! s:popup__get_opener_winnr() dict abort
 endfunction
 let s:popup.get_opener_winnr = funcref('s:popup__get_opener_winnr')
 
-function! s:popup__apply_highlights() dict abort
+function! s:popup__apply_highlights(bufnr) dict abort
     let ns_id = nvim_create_namespace('ulf#popup#ns_id')
-    call nvim_buf_clear_namespace(self.bufnr, ns_id, 0, -1)
+    call nvim_buf_clear_namespace(a:bufnr, ns_id, 0, -1)
     if has_key(self.opts, 'highlights')
         for highlight in self.opts.highlights
             let [group, line, startcol, endcol] = highlight
-            call nvim_buf_add_highlight(self.bufnr, ns_id, group, line, startcol, endcol)
+            call nvim_buf_add_highlight(a:bufnr, ns_id, group, line, startcol, endcol)
         endfor
     endif
 endfunction
@@ -229,14 +229,14 @@ function! s:popup__open() dict abort
     let b:__ulf_popup = self
     execute 'autocmd BufWipeout,BufLeave <buffer> call getbufvar(' . popup_bufnr . ', "__ulf_popup").close()'
 
+    call self.apply_highlights(popup_bufnr)
+
     if has_key(self.opts, 'enter') && !self.opts.enter
-        wincmd p
+        redraw | wincmd p
     endif
 
     let self.bufnr = popup_bufnr
     let self.win_id = win_id
-
-    call self.apply_highlights()
 endfunction
 let s:popup.open = funcref('s:popup__open')
 
