@@ -23,6 +23,7 @@ class SignatureHelpHelper(RequestHelper, method=RequestMethod.SIGNATURE_HELP, ca
             return
         active_signature = signature_help.active_signature()
         pre, label, post = '', '', ''
+        start, end = None, None
         if active_signature.parameters and signature_help._active_parameter_index in range(
                 0, len(active_signature.parameters)):
             parameter = active_signature.parameters[signature_help._active_parameter_index]
