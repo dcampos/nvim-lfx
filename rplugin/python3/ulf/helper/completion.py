@@ -30,9 +30,11 @@ class CompletionHelper(RequestHelper, method=RequestMethod.COMPLETION, capabilit
     def __init__(self, ulf, vim):
         super().__init__(ulf, vim)
 
-    def params(self, options):
+    def params(self, options: Dict[str, Any]):
         view = self.current_view()
         point = self.cursor_point()
+        if 'col' in options:
+            point.col = options['col']
         return text_document_position_params(view, point)
 
     def handle_response(self, response):
@@ -49,15 +51,12 @@ class CompletionHelper(RequestHelper, method=RequestMethod.COMPLETION, capabilit
         base = options.get('base')
 
         for rec in items:
-            if base and not rec['label'].startswith(base):
-                continue
 
             if 'textEdit' in rec and rec['textEdit'] is not None:
                 textEdit = rec['textEdit']
                 if textEdit['range']['start'] == textEdit['range']['end']:
-                    previous_input = self.vim.vars['deoplete#source#ulf#_prev_input']
                     new_text = textEdit['newText']
-                    word = f'{previous_input}{new_text}'
+                    word = f'{base}{new_text}'
                 else:
                     word = textEdit['newText']
             elif rec.get('insertText', ''):
@@ -67,6 +66,9 @@ class CompletionHelper(RequestHelper, method=RequestMethod.COMPLETION, capabilit
                     word = rec['insertText']
             else:
                 word = rec.get('entryName', rec.get('label'))
+
+            if base and not word.startswith(base):
+                continue
 
             item = {
                 'word': word,

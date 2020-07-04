@@ -94,7 +94,13 @@ function! ulf#omni(findstart, base) abort
         return s:find_start()
     endif
 
-    call ULF_complete_sync({'target': 'ulf#completion_results', 'process_response': v:true, 'base': a:base})
+    let col = strchars(s:get_text_to_cursor() . a:base)
+    call ULF_complete_sync({
+                \ 'target': 'ulf#completion_results',
+                \ 'process_response': v:true,
+                \ 'base': a:base,
+                \ 'col': col
+                \ }, v:true)
     let results = get(g:, 'ulf#completion_results', [])
     return results
 endfunction
@@ -105,15 +111,17 @@ function! ulf#complete() abort
 endfunction
 
 function! ulf#complete_sync() abort
-    call ULF_complete_sync({'target': 'ulf#completion_results', 'process_response': v:true})
+    call ULF_complete_sync({'target': 'ulf#completion_results', 'process_response': v:true}, v:true)
     let results = get(g:, 'ulf#completion_results', [])
     call ulf#completion_callback(results)
     return ''
 endfunction
 
 function! ulf#completion_callback(items) abort
-    let match_start = s:find_start() + 1
-    call complete(match_start, a:items)
+    if type(a:items) !=# type(v:null)
+        let match_start = s:find_start() + 1
+        call complete(match_start, a:items)
+    endif
 endfunction
 
 function! ulf#show_popup(content, opts) abort
@@ -166,10 +174,14 @@ function! s:resolve_completion(completed_item) abort
 endfunction
 
 function! s:find_start() abort
-    let line = getline('.')[:col('.')-1]
+    let line = s:get_text_to_cursor()
     let match_start = match(line, '\k\+$')
     if match_start < 0
-        let match_start = col('.')
+        let match_start = col('.') - 1
     endif
     return match_start
+endfunction
+
+function! s:get_text_to_cursor() abort
+    return getline('.')[:col('.')-1]
 endfunction

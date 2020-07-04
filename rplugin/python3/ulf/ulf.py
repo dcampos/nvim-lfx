@@ -212,11 +212,12 @@ class ULF:
         self._send_request(RequestMethod.CODE_ACTION, *args)
 
     @pynvim.function('ULF_complete')
-    def complete(self, args: List[Dict[str, Any]] = [{}]):
+    def complete(self, args):
         self._send_request(RequestMethod.COMPLETION, *args)
 
     @pynvim.function('ULF_complete_sync', sync=True)
-    def complete_sync(self, args: List[Dict[str, Any]] = [{}]):
+    def complete_sync(self, args):
+        debug(args)
         self._send_request(RequestMethod.COMPLETION, *args)
 
     @pynvim.function('ULF_resolve_completion', sync=True)
@@ -299,6 +300,7 @@ class RequestHelper(metaclass=abc.ABCMeta):
 
     def cursor_point(self) -> Point:
         cursor = self.vim.current.window.cursor
+        debug('cursor => %s' % cursor)
         return self._create_point(*cursor)
 
     def selection_range(self) -> Range:
