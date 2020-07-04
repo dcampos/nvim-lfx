@@ -285,7 +285,7 @@ function! s:popup__update() dict abort
         call setline(1, self.contents)
         setlocal nomodified nomodifiable
 
-        call self.apply_highlights()
+        call self.apply_highlights(self.bufnr)
     finally
         if winnr() != prev_winnr
             noautocmd execute prev_winnr . 'wincmd w'
