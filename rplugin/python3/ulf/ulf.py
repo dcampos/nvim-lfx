@@ -2,6 +2,7 @@ import importlib
 import os.path
 import pynvim
 import abc
+import json
 from pynvim import Nvim
 
 from .core.typing import Dict, List, Callable, Optional, Any, Iterator
@@ -18,7 +19,7 @@ from .documents import VimDocumentHandler, VimConfigManager
 from .editor import VimEditor, VimWindow, VimView
 from .context import ContextManager
 from .diagnostics import DiagnosticsPresenter
-from .util import to_char_index
+from .util import to_char_index, debounce
 
 
 @pynvim.plugin
@@ -234,10 +235,10 @@ class ULF:
             self.diagnostics_presenter.show_all(view.file_name())
 
     @pynvim.function('ULF_send_request', sync=True)
-    def send_request(self, args,):
+    def send_request(self, args):
         self._send_request(*args)
 
-    def _send_request(self, method, opts={}, sync=False):
+    def _send_request(self, method, opts={}, sync=False, wait=0):
         debug('_send_request, method={}, opts={}, sync={}'.format(method, opts, sync))
         helper = RequestHelper.for_method(method)
         if helper:
@@ -248,6 +249,9 @@ class ULF:
 
             if sync:
                 instance.run_sync(opts)
+            elif wait:
+                call_id = f'{method}:{json.dumps(opts, sort_keys=True)}'
+                debounce(wait, call_id, lambda: self.vim.async_call(instance.run, opts))
             else:
                 instance.run(opts)
         else:
@@ -315,7 +319,7 @@ class RequestHelper(metaclass=abc.ABCMeta):
         return Point(row, col)
 
     def is_enabled(self) -> bool:
-        """Should check if the helper should by run."""
+        """Should check if the helper should run."""
         return True
 
     @property

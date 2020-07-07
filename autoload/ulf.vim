@@ -15,7 +15,7 @@ function! ulf#enable() abort
     augroup END
 
     command! ULFHover call ULF_hover()
-    command! ULFSignatureHelp call ULF_signature_help()
+    command! ULFSignatureHelp call ULF_signature_help({}, v:false, 0.2)
     command! ULFGotoDefinition call ULF_goto_definition()
     command! ULFGotoTypeDefinition call ULF_goto_type_definition()
     command! ULFGotoImplementation call ULF_goto_implementation()
