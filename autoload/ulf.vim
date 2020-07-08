@@ -125,6 +125,7 @@ function! ulf#completion_callback(items) abort
 endfunction
 
 function! ulf#show_popup(content, opts) abort
+    call s:close_popup()
     let content = a:content
     if empty(content) || content == [''] | return | endif
     let popup = ulf#popup#new(a:content, extend({
