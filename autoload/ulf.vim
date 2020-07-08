@@ -170,7 +170,7 @@ function! s:resolve_completion(completed_item) abort
     let lspitem = get(user_data, 'lspitem')
     if !empty(lspitem)
         call ULF_resolve_completion({'target': 'ulf#completion#_resolved_item',
-                    \ 'completion_item': lspitem}, v:true)
+                    \ 'completion_item': lspitem})
     endif
 endfunction
 
