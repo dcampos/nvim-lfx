@@ -141,7 +141,8 @@ class ULF:
     @pynvim.function('ULF_handle_complete_done', sync=True)
     def _on_complete_done(self, args):
         resolved_item = self.vim.vars.get('ulf#completion#_resolved_item')
-        if resolved_item:
+        completed_item = self.vim.vvars.get('completed_item')
+        if completed_item and resolved_item:
             view = self.window.active_view()
             edits = resolved_item.get('additionalTextEdits')
             if edits:
