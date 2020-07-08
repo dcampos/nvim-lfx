@@ -179,39 +179,40 @@ function! s:popup__open() dict abort
 
     let [width, height] = self.window_size()
 
+    let bufnr = nvim_create_buf(v:false, v:true)
+
     " Open window
     if self.type ==# 'floating'
         let opts = self.floating_win_opts(width, height)
-        let win_id = nvim_open_win(self.opener_bufnr, v:true, opts)
+        let win_id = nvim_open_win(bufnr, v:false, opts)
     else
-        let curr_pos = getpos('.')
-        let mods = 'noswapfile'
-        if exists('g:ulf#popup#preview_mods') && g:ulf#popup#preview_mods !=# ''
-            let mods .= ' ' . g:ulf#popup#preview_mods
-        endif
-
-        " :pedit! is not available since it refreshes the file buffer (#39)
-        execute mods 'new'
-        set previewwindow
-
-        call setpos('.', curr_pos)
-        wincmd P
-        execute height . 'wincmd _'
-        let win_id = win_getid()
+        echoerr "Unsupported type:" self.type
     endif
+
+    call nvim_win_set_option(win_id, 'spell', v:false)
+    call nvim_win_set_option(win_id, 'list', v:false)
+    call nvim_win_set_option(win_id, 'foldenable', v:false)
+    call nvim_win_set_option(win_id, 'signcolumn', 'no')
+    call nvim_win_set_option(win_id, 'wrap', v:true)
+    call nvim_win_set_option(win_id, 'cursorline', v:false)
+    call nvim_win_set_option(win_id, 'conceallevel', 3)
+    call nvim_win_set_option(win_id, 'number', v:false)
+    call nvim_win_set_option(win_id, 'relativenumber', v:false)
 
     " Setup content
-    enew!
-    let popup_bufnr = bufnr('%')
-    setlocal
-    \ buftype=nofile bufhidden=wipe nomodified nobuflisted noswapfile nonumber
-    \ nocursorline wrap nonumber norelativenumber signcolumn=no nofoldenable
-    \ nospell nolist nomodeline conceallevel=3
+    call nvim_buf_set_option(bufnr, 'bufhidden', 'wipe')
+    call nvim_buf_set_option(bufnr, 'modified', v:false)
+    call nvim_buf_set_option(bufnr, 'buflisted', v:false)
+    call nvim_buf_set_option(bufnr, 'swapfile', v:false)
+    call nvim_buf_set_option(bufnr, 'modeline', v:false)
+
     if has_key(self.opts, 'filetype')
-        let &l:filetype = self.opts.filetype
+        call nvim_buf_set_option(bufnr, 'filetype', self.opts.filetype)
     endif
-    call setline(1, self.contents)
-    setlocal nomodified nomodifiable
+    call nvim_buf_set_lines(bufnr, 0, -1, v:false, self.contents)
+
+    call nvim_buf_set_option(bufnr, 'modified', v:false)
+    call nvim_buf_set_option(bufnr, 'modifiable', v:false)
 
     " Setup highlights
     " if has('nvim')
@@ -220,22 +221,17 @@ function! s:popup__open() dict abort
 
     if has_key(self.opts, 'mappings')
         for m in keys(self.opts.mappings)
-            execute printf('nnoremap <buffer><silent><nowait>%s :<C-u>call b:__ulf_popup.opts.mappings["%s"][0]()<CR>', m, m)
+            execute printf('nnoremap <buffer=%s><silent><nowait>%s :<C-u>call b:__ulf_popup.opts.mappings["%s"][0]()<CR>', bufnr, m, m)
         endfor
-        nnoremap <buffer><silent><nowait>? :<C-u>call b:__ulf_popup.echo_help()<CR>
+        execute printf('nnoremap <buffer=%s><silent><nowait>? :<C-u>call b:__ulf_popup.echo_help()<CR>', bufnr)
     endif
 
     " Ensure to close popup
-    let b:__ulf_popup = self
-    execute 'autocmd BufWipeout,BufLeave <buffer> call getbufvar(' . popup_bufnr . ', "__ulf_popup").close()'
+    call nvim_buf_set_var(bufnr, '__ulf_popup', self)
 
-    call self.apply_highlights(popup_bufnr)
+    call self.apply_highlights(bufnr)
 
-    if has_key(self.opts, 'enter') && !self.opts.enter
-        redraw | wincmd p
-    endif
-
-    let self.bufnr = popup_bufnr
+    let self.bufnr = bufnr
     let self.win_id = win_id
 endfunction
 let s:popup.open = funcref('s:popup__open')
