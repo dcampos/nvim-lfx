@@ -66,11 +66,10 @@ class CodeActionsManager(object):
 actions_manager = CodeActionsManager()
 
 
-def request_code_actions(view: VimView, location: Any,
+def request_code_actions(view: VimView, location: Union[Point, Range],
                          actions_handler: Callable[[CodeActionsByConfigName], None]) -> CodeActionsAtLocation:
     if type(location) == Point:
-        diagnostics_by_config = filter_by_point(view_diagnostics(view), location)
-        return request_code_actions_with_diagnostics(view, location, diagnostics_by_config, actions_handler)
+        return request_code_actions_at_point(view, location, actions_handler)
     else:
         return request_code_actions_for_selection(view, location, actions_handler)
 
@@ -104,34 +103,22 @@ def request_code_actions_for_selection(
     return actions_at_location
 
 
-def request_code_actions_with_diagnostics(
+def request_code_actions_at_point(
     view: VimView,
     point: Point,
-    diagnostics_by_config: Dict[str, List[Diagnostic]],
     actions_handler: Callable[[CodeActionsByConfigName], None]
 ) -> CodeActionsAtLocation:
+    diagnostics_by_config = filter_by_point(view_diagnostics(view), point)
     actions_at_location = CodeActionsAtLocation(actions_handler)
     for session in view.available_sessions('codeActionProvider'):
-        if session.config.name in diagnostics_by_config:
-            point_diagnostics = diagnostics_by_config[session.config.name]
-            if not point_diagnostics:
-                continue
-            file_name = view.file_name()
+        point_diagnostics = diagnostics_by_config.get(session.config.name, [])
+        if point_diagnostics:
             relevant_range = point_diagnostics[0].range
-            if file_name:
-                params = {
-                    "textDocument": {
-                        "uri": filename_to_uri(file_name)
-                    },
-                    "range": relevant_range.to_lsp(),
-                    "context": {
-                        "diagnostics": list(diagnostic.to_lsp() for diagnostic in point_diagnostics)
-                    }
-                }
-                if session.client:
-                    session.client.send_request(
-                        Request.codeAction(params),
-                        actions_at_location.collect(session.config.name))
+        else:
+            relevant_range = Range(point, point)
+        file_name = view.file_name()
+        if file_name:
+            do_request(session, actions_at_location, file_name, relevant_range, point_diagnostics)
     return actions_at_location
 
 
@@ -206,3 +193,4 @@ class CodeActionsHelper(RequestHelper, method=RequestMethod.CODE_ACTION):
         if len(self.commands) > index > -1:
             selected = self.commands[index]
             run_code_action_or_command(self.view, selected[0], selected[2])
+

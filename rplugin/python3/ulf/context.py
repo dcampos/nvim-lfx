@@ -239,14 +239,13 @@ class ContextManager(object):
         return candidate
 
     def _apply_workspace_edit(self, params: Dict[str, Any], client: Client, request_id: int) -> None:
+        def apply():
+            self._editor.apply_workspace_edits(changes)
+            client.send_response(Response(request_id, {"applied": True}))
+
         edit = params.get('edit', dict())
         changes = parse_workspace_edit(edit)
-        self._editor.set_timeout_async(lambda: self._editor.apply_workspace_edits(changes))
-        # TODO: We should ideally wait for all changes to have been applied.
-        # This however seems overly complicated, because we have to bring along a string representation of the
-        # client through the editor-command invocations (as well as the request ID, but that is easy), and then
-        # reconstruct/get the actual Client object back. Maybe we can (ab)use our homebrew event system for this?
-        client.send_response(Response(request_id, {"applied": True}))
+        self._editor.set_timeout_async(apply)
 
     def _payload_log_sink(self, message: str) -> None:
         self._editor.set_timeout_async(lambda: self._handle_server_message(":", message), 0)

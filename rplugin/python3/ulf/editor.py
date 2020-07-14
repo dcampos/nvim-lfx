@@ -274,5 +274,4 @@ class VimView(View):
                     found = head
                     break
             head, tail = os.path.split(head)
-        _, dirname = os.path.split(found)
         return found
