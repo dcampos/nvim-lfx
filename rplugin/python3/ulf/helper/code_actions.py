@@ -1,7 +1,7 @@
 from ..ulf import RequestHelper
 from ..editor import VimView
 from ..core.edit import parse_workspace_edit
-from ..core.protocol import Diagnostic
+# from ..core.protocol import Diagnostic
 from ..core.sessions import Session
 from ..core.protocol import Request, RequestMethod, Point, Range
 from ..core.typing import Any, List, Dict, Callable, Optional, Union, Tuple, Mapping, TypedDict
@@ -162,16 +162,17 @@ class CodeActionsHelper(RequestHelper, method=RequestMethod.CODE_ACTION):
         super().__init__(ulf, vim)
 
     def run(self, options={}) -> None:
+        self.options = options
         self.view = self.current_view()  # type: VimView
         self.commands = []  # type: List[Tuple[str, str, CodeActionOrCommand]]
         self.commands_by_config = {}  # type: CodeActionsByConfigName
         visual = options.get('visual', False)
         if visual:
             actions_manager.request(self.view, self.selection_range(),
-                                    lambda res: self.dispatch_response(res, options))
+                                    lambda res: self.vim.async_call(self.dispatch_response, res, options))
         else:  # No selection
             actions_manager.request(self.view, self.cursor_point(),
-                                    lambda res: self.dispatch_response(res, options))
+                                    lambda res: self.vim.async_call(self.dispatch_response, res, options))
 
     def combine_commands(self) -> 'List[Tuple[str, str, CodeActionOrCommand]]':
         results = []

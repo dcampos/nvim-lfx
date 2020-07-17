@@ -86,6 +86,10 @@ function! ulf#attach_buffer(bufnr) abort
                     \ . '> call s:handle_complete_changed(v:event)'
         execute 'autocmd CursorMoved,InsertEnter <buffer=' . a:bufnr
                     \ . '> call s:close_popup()'
+        execute 'autocmd CursorHold <buffer=' . a:bufnr
+                    \ . '> call s:fetch_code_actions()'
+        execute 'autocmd CursorMoved <buffer=' . a:bufnr
+                    \ . '> call s:dismiss_code_actions()'
     augroup END
 endfunction
 
@@ -124,6 +128,14 @@ function! ulf#completion_callback(items) abort
     endif
 endfunction
 
+function! ulf#code_action_callback(results) abort
+    let b:results = a:results
+    let available = len(filter(a:results, '!empty(v:val)')) > 0
+    if available
+        call ulf#sign#place_lightbulb('%', line('.'))
+    endif
+endfunction
+
 function! ulf#show_popup(content, opts) abort
     call s:close_popup()
     let content = a:content
@@ -138,6 +150,14 @@ endfunction
 
 function! s:close_popup() abort
     call ulf#popup#close_current_popup()
+endfunction
+
+function! s:fetch_code_actions() abort
+    call ULF_code_actions({'callback': 'ulf#code_action_callback', 'include_results': v:true}, v:false, 0.2)
+endfunction
+
+function! s:dismiss_code_actions() abort
+    call ulf#sign#clear_lightbulbs()
 endfunction
 
 function! s:handle_complete_done() abort
