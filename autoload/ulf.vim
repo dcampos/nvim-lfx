@@ -129,10 +129,9 @@ function! ulf#completion_callback(items) abort
 endfunction
 
 function! ulf#code_action_callback(results) abort
-    let b:results = a:results
     let available = len(filter(a:results, '!empty(v:val)')) > 0
     if available
-        call ulf#sign#place_lightbulb('%', line('.'))
+        call ulf#virtualtext#place_lightbulb(0, line('.') - 1)
     endif
 endfunction
 
@@ -153,11 +152,15 @@ function! s:close_popup() abort
 endfunction
 
 function! s:fetch_code_actions() abort
-    call ULF_code_actions({'callback': 'ulf#code_action_callback', 'include_results': v:true}, v:false, 0.2)
+    call ULF_code_actions({
+                \ 'callback': 'ulf#code_action_callback',
+                \ 'include_results': v:true,
+                \ 'visual': s:is_visual()
+                \ }, v:false, 0.2)
 endfunction
 
 function! s:dismiss_code_actions() abort
-    call ulf#sign#clear_lightbulbs()
+    call ulf#virtualtext#clear_lightbulbs(0)
 endfunction
 
 function! s:handle_complete_done() abort
