@@ -65,7 +65,7 @@ class GotoDefinitionHelper(RequestHelper, method=RequestMethod.DEFINITION, capab
         items = list(map(to_item, locations))
 
         self.vim.call('setqflist', items)
-        self.vim.command('copen')
+        self.vim.command('botright copen')
 
 
 class GotoTypeDefinitionHelper(GotoDefinitionHelper, method=RequestMethod.TYPE_DEFINITION, capability='typeDefinition'):

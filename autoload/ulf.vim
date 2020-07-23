@@ -154,8 +154,7 @@ endfunction
 function! s:fetch_code_actions() abort
     call ULF_code_actions({
                 \ 'callback': 'ulf#code_action_callback',
-                \ 'include_results': v:true,
-                \ 'visual': s:is_visual()
+                \ 'include_results': v:true
                 \ }, v:false, 0.2)
 endfunction
 
