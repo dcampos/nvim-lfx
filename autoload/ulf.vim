@@ -87,9 +87,9 @@ function! ulf#attach_buffer(bufnr) abort
         execute 'autocmd CursorMoved,InsertEnter <buffer=' . a:bufnr
                     \ . '> call s:close_popup()'
         execute 'autocmd CursorHold <buffer=' . a:bufnr
-                    \ . '> call s:fetch_code_actions()'
+                    \ . '> call s:fetch_code_actions(v:false)'
         execute 'autocmd CursorMoved <buffer=' . a:bufnr
-                    \ . '> call s:dismiss_code_actions()'
+                    \ . '> call s:fetch_code_actions_visual()'
     augroup END
 endfunction
 
@@ -128,7 +128,10 @@ function! ulf#completion_callback(items) abort
     endif
 endfunction
 
+let s:count = 0
+
 function! ulf#code_action_callback(results) abort
+    call s:dismiss_code_actions()
     let available = len(filter(a:results, '!empty(v:val)')) > 0
     if available
         call ulf#virtualtext#place_lightbulb(0, line('.') - 1)
@@ -151,10 +154,20 @@ function! s:close_popup() abort
     call ulf#popup#close_current_popup()
 endfunction
 
-function! s:fetch_code_actions() abort
+function! s:fetch_code_actions_visual() abort
+    let mode = mode()
+    if l:mode =~# '\v\c^%(v|s)$' || l:mode ==# "\<C-V>" || l:mode ==# "\<C-S>"
+        " Hack to update visual marks
+        execute "normal! \<esc>gv"
+        call s:fetch_code_actions(v:true)
+    endif
+endfunction
+
+function! s:fetch_code_actions(visual) abort
     call ULF_code_actions({
                 \ 'callback': 'ulf#code_action_callback',
-                \ 'include_results': v:true
+                \ 'include_results': v:true,
+                \ 'visual': a:visual
                 \ }, v:false, 0.2)
 endfunction
 

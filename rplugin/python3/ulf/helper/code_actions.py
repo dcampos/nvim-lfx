@@ -6,7 +6,7 @@ from ..core.sessions import Session
 from ..core.protocol import Request, RequestMethod, Point, Range
 from ..core.typing import Any, List, Dict, Callable, Optional, Union, Tuple, Mapping, TypedDict
 from ..core.url import filename_to_uri
-# from .core.logging import debug
+# from ..core.logging import debug
 from ..diagnostics import filter_by_point, view_diagnostics
 
 CodeActionOrCommand = TypedDict('CodeActionOrCommand', {
@@ -164,6 +164,7 @@ class CodeActionsHelper(RequestHelper, method=RequestMethod.CODE_ACTION):
     def run(self, options={}) -> None:
         self.options = options
         self.view = self.current_view()  # type: VimView
+        self.point = self.cursor_point()
         self.commands = []  # type: List[Tuple[str, str, CodeActionOrCommand]]
         self.commands_by_config = {}  # type: CodeActionsByConfigName
         visual = options.get('visual', False)
@@ -173,6 +174,11 @@ class CodeActionsHelper(RequestHelper, method=RequestMethod.CODE_ACTION):
         else:  # No selection
             actions_manager.request(self.view, self.cursor_point(),
                                     lambda res: self.vim.async_call(self.dispatch_response, res, options))
+
+    def dispatch_response(self, res, options) -> None:
+        if self.point != self.cursor_point():
+            return
+        super().dispatch_response(res, options)
 
     def combine_commands(self) -> 'List[Tuple[str, str, CodeActionOrCommand]]':
         results = []
@@ -194,4 +200,3 @@ class CodeActionsHelper(RequestHelper, method=RequestMethod.CODE_ACTION):
         if len(self.commands) > index > -1:
             selected = self.commands[index]
             run_code_action_or_command(self.view, selected[0], selected[2])
-

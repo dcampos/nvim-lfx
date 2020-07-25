@@ -243,7 +243,7 @@ class ULF:
         debug('_send_request, method={}, opts={}, sync={}'.format(method, opts, sync))
         helper = RequestHelper.for_method(method)
         if helper:
-            instance = helper.instance(self, self.vim)
+            instance = helper(self, self.vim)
 
             if not instance.is_enabled():
                 return
@@ -361,6 +361,9 @@ class RequestHelper(metaclass=abc.ABCMeta):
 
     def dispatch_response(self, response, options):
         """Dispatches the response according to the options passed"""
+
+        if not response:
+            return
 
         if options.get('process_response', False):
             response = self.process_response(response, options)
