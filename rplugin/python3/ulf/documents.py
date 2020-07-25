@@ -14,14 +14,18 @@ from .core.protocol import TextDocumentSyncKindIncremental
 def nop(): return None
 
 
+class DocumentState:
+    version = None
+    content = None
+
+
 class VimDocumentHandler(object):
     def __init__(self, editor: Any, settings: Settings, workspace: ProjectFolders,
                  window: Window, configs: ConfigRegistry) -> None:
         self._editor = editor
         self._settings = settings
         self._configs = configs
-        self._document_states = dict()  # type: Dict[str, Tuple[int, str]]
-        self._document_versions = dict()  # type: Dict[str, int]
+        self._document_states = dict()  # type: Dict[str, DocumentState]
         self._content_states = {}  # type: Dict[str, str]
         self._pending_buffer_changes = dict()  # type: Dict[int, Dict]
         self._sessions = dict()  # type: Dict[str, List[Session]]
@@ -88,7 +92,7 @@ class VimDocumentHandler(object):
         if file_name and file_name not in self._document_states:
             config_languages = self._config_languages(view)
             if len(config_languages):
-                self._document_states[file_name] = None, None
+                self._document_states[file_name] = DocumentState()
                 # the sessions may not be available yet,
                 # the document will get synced when a session is added.
                 sessions = self._get_applicable_sessions(view)
@@ -178,11 +182,12 @@ class VimDocumentHandler(object):
 
             if file_name in self._document_states and view.buffer_id() in self._pending_buffer_changes:
                 del self._pending_buffer_changes[view.buffer_id()]
-                # Do not send the same version twice
-                if self._document_states[file_name][0] == view.change_count():
-                    return
-                previous_content = self._document_states[file_name][1]
                 content = view.entire_content()
+                change_count = view.change_count()
+                # Do not send the same version twice
+                if self._document_states[file_name].version == change_count or self._document_states[file_name].content == content:
+                    return
+                previous_content = self._document_states[file_name].content
                 # mypy: expected editor.View, got View
                 for session in self._get_applicable_sessions(view):
                     if session.client and file_name in self._document_states and session.should_notify_did_change():
@@ -195,7 +200,8 @@ class VimDocumentHandler(object):
                             # Full sync
                             notification = did_change(view, content)
                         session.client.send_notification(notification)
-                self._document_states[file_name] = view.change_count(), content
+                self._document_states[file_name].version = change_count
+                self._document_states[file_name].content = content
 
 
 class VimConfigManager(object):
