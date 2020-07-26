@@ -40,5 +40,9 @@ class WorkspaceSymbolHelper(RequestHelper, method=RequestMethod.WORKSPACE_SYMBOL
 
         locations = list(map(parse_info, response))
 
-        self.vim.call('setqflist', locations)
-        self.vim.command('copen')
+        if len(locations) == 1:
+            location = locations[0]
+            self.ulf.editor.goto(location['filename'], location['lnum'], location['col'])
+        else:
+            self.vim.call('setqflist', locations)
+            self.vim.command('botright copen')

@@ -1,11 +1,11 @@
 from ..ulf import RequestHelper
 from ..core.views import text_document_position_params
-from ..core.protocol import Request, RequestMethod
-from ..core.logging import debug
+from ..core.protocol import RequestMethod
+# from ..core.logging import debug
 from ..core.url import uri_to_filename
 from ..core.typing import Tuple, List, Any, Dict
 from ..core.protocol import Point
-from pynvim import Nvim
+# from pynvim import Nvim
 
 
 class GotoDefinitionHelper(RequestHelper, method=RequestMethod.DEFINITION, capability='definitionProvider'):
@@ -21,7 +21,7 @@ class GotoDefinitionHelper(RequestHelper, method=RequestMethod.DEFINITION, capab
 
             if len(locations) == 1:
                 file_path, _, pos = locations[0]
-                self._goto(file_path, pos[0], pos[1])
+                self.ulf.editor.goto(file_path, pos[0], pos[1])
             else:
                 self._display_locations(locations)
                 pass
@@ -50,12 +50,6 @@ class GotoDefinitionHelper(RequestHelper, method=RequestMethod.DEFINITION, capab
 
         # for item in response:
         #     debug('{}: {}:{}'.format(item['uri'], item['range']['start'], item['range']['end']))
-
-    def _goto(self, file, line, col=1):
-        bufnr = self.vim.funcs.bufnr(file, True)
-        self.vim.command("normal m'")
-        self.vim.command('buffer %d' % bufnr)
-        self.vim.funcs.cursor(line, col)
 
     def _display_locations(self, locations):
         def to_item(location):

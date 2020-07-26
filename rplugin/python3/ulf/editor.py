@@ -60,6 +60,12 @@ class VimEditor(Editor):
         if options:
             self.vim.async_call(show_and_handle)
 
+    def goto(self, file_path, line, col=1) -> None:
+        bufnr = self.vim.funcs.bufnr(file_path, True)
+        self.vim.command("normal m'")
+        self.vim.command('buffer %d' % bufnr)
+        self.vim.funcs.cursor(line, col)
+
     def adjust_from_lsp(self, file_path, row, col):
         """Adjust LSP point to byte index (0-based)"""
         bufnr = self.vim.funcs.bufnr(file_path, True)
@@ -106,7 +112,6 @@ class VimEditor(Editor):
         # self.vim.api.buf_set_lines(bufnr, 0, -1, False, buffer_lines)
         # self.vim.api.buf_set_option(bufnr, 'modified', False)
 
-    # TODO: change tests
     def apply_edit(self, source_lines, edit):
         (start_line, start_col), (end_line, end_col), new_text = edit
 
