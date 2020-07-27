@@ -5,7 +5,7 @@
 "=============================================================================
 
 function! ulf#virtualtext#place_lightbulb(expr, line) abort
-    call nvim_buf_set_virtual_text(a:expr, s:ns_id, a:line, [["\U1F4A1", 'NONE']], {})
+    call nvim_buf_set_virtual_text(a:expr, s:ns_id, a:line, [[s:bulb_sign, 'ULFLightbulbVirtual']], {})
 endfunction
 
 function! ulf#virtualtext#clear_lightbulbs(expr) abort
@@ -14,6 +14,7 @@ endfunction
 
 function! s:initialize() abort
     let s:ns_id = nvim_create_namespace('')
+    let s:bulb_sign = get(g:, 'ulf#code_actions#sign', "\U1F4A1")
 endfunction
 
 call s:initialize()
