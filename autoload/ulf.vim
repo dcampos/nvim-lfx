@@ -156,7 +156,7 @@ endfunction
 
 function! s:fetch_code_actions_visual() abort
     let mode = mode()
-    if l:mode =~# '\v\c^%(v|s)$' || l:mode ==# "\<C-V>" || l:mode ==# "\<C-S>"
+    if l:mode =~# '\v\c^%(v)$' || l:mode ==# "\<C-V>"
         " Hack to update visual marks
         execute "normal! \<esc>gv"
         call s:fetch_code_actions(v:true)
