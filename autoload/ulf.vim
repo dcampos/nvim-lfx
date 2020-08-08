@@ -37,8 +37,8 @@ function! s:complete_symbols(arglead, line, pos) abort
     let target = 'ulf#workspace_symbol#results'
     call ULF_workspace_symbol({'query': a:arglead, 'target': target}, v:true)
     let results = get(g:, target, [])
-    map(results, 'get(v:val, "name")')
-    return results
+    let candidates = map(results, 'get(v:val, "name")')
+    return candidates
 endfunction
 
 function! s:request_rename(new_name) abort

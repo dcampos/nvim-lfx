@@ -362,6 +362,8 @@ class RequestHelper(metaclass=abc.ABCMeta):
     def dispatch_response(self, response, options):
         """Dispatches the response according to the options passed"""
 
+        debug(response)
+
         if not response:
             return
 
