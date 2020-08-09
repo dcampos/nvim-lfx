@@ -1,0 +1,177 @@
+*ulf.txt* Remote Python-based LSP client for vim.
+*ulf*
+
+ULF - ULF: LSP Frontend
+
+===============================================================================
+CONTENTS                                                         *ulf-contents*
+
+    1. Introduction.........................|ulf-introduction|
+    2. Usage................................|ulf-usage|
+    2. Functions............................|ulf-functions|
+    3. Commands.............................|ulf-commands|
+    3. License..............................|ulf-introduction|
+
+
+===============================================================================
+1. Introduction                                              *ulf-introduction*
+
+ULF is a Python-based remote plugin that enables using Language Server Protocol
+(LSP) inside Neovim. It's mostly a port of Sublime Text's own LSP plugin to
+Neovim, which greatly speeded up development and allowed it to be as feature
+complete as possible in no time.
+
+
+===============================================================================
+1. Usage                                                            *ulf-usage*
+
+The first that must be done in order to use ULF is configuring language servers
+you want to use, as it comes with no server configured by default. You do that
+by using the |g:ulf#configs| variable. For example:
+>
+    let g:ulf#configs =
+      \ {
+      \     'pyls': {
+      \         'command': ['python3', '-m', 'pyls'],
+      \         'filetypes': ['python'],
+      \         'enabled': v:true,
+      \         'initializationOptions': {
+      \         },
+      \         'settings': {
+      \         },
+      \     },
+      \     'rls': {
+      \         'command': ['rustup', 'run', 'stable', 'rls'],
+      \         'filetypes': ['rust', 'toml'],
+      \         'enabled': v:true,
+      \         'initializationOptions': {
+      \          },
+      \          'settings': {
+      \          },
+      \     },
+      \ }
+<
+                                                            *ulf-root-patterns*
+
+In order to identify the root of the current workspace, ULF uses the
+|g:ulf#root_patterns| variable. The configuration is set on per language basis,
+with an '*' being used for patterns that apply to every language.
+>
+    let g:ulf#root_patterns = {
+      \     '*': ['.gitmodules', '.git'],
+      \     'rust': ['Cargo.toml']
+      \ }
+<
+                                                                  *ulf-logging*
+
+Logging can be controlled through the |g:ulf#log| series of global variables,
+which allow you to determine where and what to log. By default, logging is
+disabled.
+>
+    let g:ulf#log#file = '/var/log/ulf.log'
+    let g:ulf#log#debug = v:true
+    let g:ulf#log#payloads = v:true
+    let g:ulf#log#server = v:true
+    let g:ulf#log#stderr = v:true
+<
+                                                                 *ulf-mappings*
+
+ULF comes with no mapping configured out of the box. You can use the
+|ULFAttachBuffer| |autocmd| to set up your mappings for a particular buffer
+whenever that buffer atthached to a language servers. The variable
+|g:ulf#attached_bufnr| holds the buffer number of the buffer currently being
+attached. For example:
+>
+    autocmd vimrc User ULFAttachBuffer call s:setup_lsp(g:ulf#attached_bufnr)
+
+    function! s:setup_lsp(bufnr) abort
+        let opts = {'silent': v:true, 'noremap': v:true}
+
+        call nvim_buf_set_keymap(a:bufnr, 'n', '<M-r>',
+            \ ':ULFRename<cr>', opts)
+        call nvim_buf_set_keymap(a:bufnr, 'n', '<M-a>',
+            \ ':ULFCodeActions<cr>', opts)
+        call nvim_buf_set_keymap(a:bufnr, 'v', '<M-a>',
+            \ ':<c-u>ULFCodeActionsVisual<cr>', opts)
+        call nvim_buf_set_keymap(a:bufnr, 'n', 'K',
+            \ ':ULFHover<cr>', opts)
+        call nvim_buf_set_keymap(a:bufnr, 'n', 'gd',
+            \ ':ULFGotoDefinition<cr>', opts)
+        call nvim_buf_set_keymap(a:bufnr, 'n', 'gr',
+            \ ':ULFReferences<cr>', opts)
+        call nvim_buf_set_keymap(a:bufnr, 'n', 'gs',
+            \ ':ULFWorkspaceSymbol <c-r><c-w><cr>', opts)
+
+        for char in [',', '(', ')']
+            call nvim_buf_set_keymap(a:bufnr, 'i', char,
+                \ char. '<c-o>:ULFSignatureHelp<cr>', opts)
+        endfor
+    endfunction
+<
+
+===============================================================================
+1. Functions                                                    *ulf-functions*
+
+TODO
+
+
+===============================================================================
+1. Commands                                                      *ulf-commands*
+
+ULFHover                                                             *ULFHover*
+
+TODO
+
+ULFSignatureHelp                                             *ULFSignatureHelp*
+
+TODO
+
+ULFGotoDefinition                                           *ULFGotoDefinition*
+
+TODO
+
+ULFGotoTypeDefinition                                   *ULFGotoTypeDefinition*
+
+TODO
+
+ULFGotoImplementation                                   *ULFGotoImplementation*
+
+TODO
+
+ULFGotoDeclaration                                         *ULFGotoDeclaration*
+
+TODO
+
+ULFWorkspaceSymbol                                         *ULFWorkspaceSymbol*
+
+TODO
+
+ULFReferences                                                   *ULFReferences*
+
+TODO
+
+ULFDocumentHighlight                                     *ULFDocumentHighlight*
+
+TODO
+
+ULFCodeActions                                                 *ULFCodeActions*
+
+TODO
+
+ULFCodeActionsVisual                                     *ULFCodeActionsVisual*
+
+TODO
+
+ULFFormat                                                           *ULFFormat*
+
+TODO
+
+ULFFormatRange                                                 *ULFFormatRange*
+
+TODO
+
+
+===============================================================================
+1. Licence                                                        *ulf-license*
+
+ULF is licensed under the MIT license.
