@@ -153,6 +153,22 @@ class VimEditor(Editor):
         # debug('\n' + '\n'.join(f'{i: 3d}: {n}' for i, n in enumerate(new_lines)))
         assert lines == new_lines
 
+    def find_root(self, view: 'VimView') -> str:
+        patterns = (self.ulf.root_patterns.get('*') +
+                    self.ulf.root_patterns.get(view.language_id(), []))
+        debug("{}".format(self.ulf.root_patterns))
+        head, tail = os.path.split(view.file_name())
+        found = head
+        while tail != '':
+            for lookup in patterns:
+                lookup = os.path.join(head, lookup)
+                if os.path.exists(lookup):
+                    found = head
+                    break
+            head, tail = os.path.split(head)
+        debug(f'patterns={patterns}, root found={found}')
+        return found
+
 
 class VimWindow(Window):
     ID = 1
@@ -187,7 +203,7 @@ class VimWindow(Window):
         return self.valid
 
     def folders(self) -> List[str]:
-        return [self.active_view().find_root()]
+        return [self.editor.find_root(self.active_view())]
 
     def find_open_file(self, path: str) -> Optional[View]:
         bufnr = self.vim.funcs.bufnr(path)
@@ -266,17 +282,3 @@ class VimView(View):
     def diagnostics(self) -> Dict[str, List[Diagnostic]]:
         diagnostics = self.editor.ulf.diagnostics.get()
         return diagnostics.get(self.file_name(), {})
-
-    def find_root(self) -> str:
-        patterns = (self._window.editor.ulf.root_patterns.get('*') +
-                    self._window.editor.ulf.root_patterns.get(self.language_id(), []))
-        head, tail = os.path.split(self.file_name())
-        found = head
-        while tail != '':
-            for lookup in patterns:
-                lookup = os.path.join(head, lookup)
-                if os.path.exists(lookup):
-                    found = head
-                    break
-            head, tail = os.path.split(head)
-        return found

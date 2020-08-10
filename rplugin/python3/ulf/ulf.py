@@ -39,7 +39,7 @@ class ULF:
         set_debug_logging(True)
         self.client_configs = ClientConfigs()  # type: ClientConfigs
         self._update_configs()
-        self.root_patterns = vars.get('ulf#root_paterns', {'*': ['.gitmodules', '.git']})
+        self.root_patterns = vars.get('ulf#root_patterns', {'*': ['.gitmodules', '.git']})
         self.editor = VimEditor(self)
         self.window = VimWindow(self.editor)
         self.config_manager = VimConfigManager(self.window, self.client_configs.all)
