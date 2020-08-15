@@ -17,7 +17,7 @@ class ProjectFolders(object):
         self.on_switched = None  # type: Optional[Callable[[List[str]], None]]
         self.folders = []  # type: List[str]
         self._current_project_file_name = None # TODO self._window.project_file_name()
-        self._set_folders(window.folders())
+        # self._set_folders(window.folders())
 
     def update(self) -> None:
         new_folders = self._window.folders()
