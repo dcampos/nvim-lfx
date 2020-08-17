@@ -156,7 +156,10 @@ class VimEditor(Editor):
     def find_root(self, view: 'VimView') -> str:
         patterns = (self.ulf.root_patterns.get('*') +
                     self.ulf.root_patterns.get(view.language_id(), []))
-        debug("{}".format(self.ulf.root_patterns))
+        debug("view={}, language_id={}, root_patterns={}".format(
+            view.file_name(),
+            view.language_id(),
+            self.ulf.root_patterns))
         head, tail = os.path.split(view.file_name())
         found = head
         while tail != '':

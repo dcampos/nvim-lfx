@@ -4,6 +4,7 @@ from ..core.protocol import RequestMethod
 from ..core.logging import debug
 from ..core.edit import parse_workspace_edit
 from ..core.typing import Dict, Any
+# from ..core.logging import debug
 from pynvim import Nvim
 
 
@@ -40,6 +41,6 @@ class RenameHelper(RequestHelper, method=RequestMethod.RENAME, capability='renam
 
     def handle_response(self, response):
         changes = parse_workspace_edit(response)
-        # debug(json.dumps(changes))
+        # debug(f'changes: {changes}')
 
         self.vim.async_call(self.ulf.editor.apply_workspace_edits, changes)

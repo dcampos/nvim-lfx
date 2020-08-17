@@ -12,8 +12,10 @@ def parse_workspace_edit(workspace_edit: Dict[str, Any]) -> Dict[str, List[TextE
             changes[uri_to_filename(uri)] = list(parse_text_edit(change) for change in file_changes)
     if 'documentChanges' in workspace_edit:
         for document_change in workspace_edit.get('documentChanges', []):
-            uri = document_change.get('textDocument').get('uri')
-            changes[uri_to_filename(uri)] = list(parse_text_edit(change) for change in document_change.get('edits'))
+            file_name = uri_to_filename(document_change.get('textDocument').get('uri'))
+            # The server may send multiple changesets for the same URI
+            changes.setdefault(file_name, []).extend(list(parse_text_edit(change)
+                for change in document_change.get('edits')))
     return changes
 
 
