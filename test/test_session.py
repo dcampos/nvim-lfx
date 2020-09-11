@@ -1,9 +1,9 @@
-from ulf.core.protocol import WorkspaceFolder
-from ulf.core.protocol import TextDocumentSyncKindFull, TextDocumentSyncKindNone, TextDocumentSyncKindIncremental
-from ulf.core.sessions import create_session, Session, get_initialize_params
-from ulf.core.types import ClientConfig
-from ulf.core.types import Settings
-from ulf.core.typing import Optional
+from lfx.core.protocol import WorkspaceFolder
+from lfx.core.protocol import TextDocumentSyncKindFull, TextDocumentSyncKindNone, TextDocumentSyncKindIncremental
+from lfx.core.sessions import create_session, Session, get_initialize_params
+from lfx.core.types import ClientConfig
+from lfx.core.types import Settings
+from lfx.core.typing import Optional
 from .test_mocks import MockClient
 from .test_mocks import TEST_CONFIG
 from .test_mocks import TEST_LANGUAGE

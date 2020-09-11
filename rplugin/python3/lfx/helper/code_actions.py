@@ -1,4 +1,4 @@
-from ..ulf import RequestHelper
+from ..lfx import RequestHelper
 from ..editor import VimView
 from ..core.edit import parse_workspace_edit
 # from ..core.protocol import Diagnostic
@@ -158,8 +158,8 @@ def run_code_action_or_command(view: VimView, config_name: str,
 
 class CodeActionsHelper(RequestHelper, method=RequestMethod.CODE_ACTION):
 
-    def __init__(self, ulf, vim) -> None:
-        super().__init__(ulf, vim)
+    def __init__(self, lfx, vim) -> None:
+        super().__init__(lfx, vim)
 
     def run(self, options={}) -> None:
         self.options = options

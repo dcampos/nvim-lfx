@@ -1,6 +1,6 @@
 import unittest
-from ulf.core.diff import parse_diff
-from ulf.core.protocol import ContentChange, Point, Range
+from lfx.core.diff import parse_diff
+from lfx.core.protocol import ContentChange, Point, Range
 
 
 CONTENT1 = """line1

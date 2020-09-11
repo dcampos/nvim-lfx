@@ -1,4 +1,4 @@
-from ..ulf import RequestHelper
+from ..lfx import RequestHelper
 from ..core.protocol import Request, RequestMethod
 from ..core.logging import debug
 from ..core.views import text_document_position_params
@@ -8,8 +8,8 @@ from .goto import GotoDefinitionHelper
 
 class HoverHelper(RequestHelper, method=RequestMethod.HOVER, capability='hoverProvider'):
 
-    def __init__(self, ulf, vim):
-        super().__init__(ulf, vim)
+    def __init__(self, lfx, vim):
+        super().__init__(lfx, vim)
 
     def params(self, options) -> Dict[str, Any]:
         view = self.current_view()
@@ -31,7 +31,7 @@ class HoverHelper(RequestHelper, method=RequestMethod.HOVER, capability='hoverPr
                         filetype = 'markdown'
                     result.append(content.get('value'))
             content = '\n\n'.join(result).split('\n')
-            if self.vim.vars.get('ulf#hover#use_echo'):
+            if self.vim.vars.get('lfx#hover#use_echo'):
                 self.vim.command('echon "{}"'.format('\n\n'.join(result).replace('"', '\\"')))
             else:
-                self.vim.call('ulf#show_popup', content, {'filetype': filetype})
+                self.vim.call('lfx#show_popup', content, {'filetype': filetype})

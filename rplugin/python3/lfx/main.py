@@ -20,7 +20,7 @@ INTELEPHENSE = ['node',
                 '/home/dpc/.npm-global/lib/node_modules/intelephense/lib/intelephense.js',
                 '--stdio']
 PYLS = [shutil.which('pyls')]
-WORKING_FILE = '/home/dpc/sandbox/ulf/rplugin/python3/ulf/core/diff.py'
+WORKING_FILE = '/home/dpc/sandbox/lfx/rplugin/python3/lfx/core/diff.py'
 # WORKING_FILE='/home/dpc/Dev/eproc1g/web/modulos/sandbox/tools/TesteDatas.php'
 # WORKING_FILE='/home/dpc/Dev/godot/my-circle-jump/Main.gd'
 

@@ -1,4 +1,4 @@
-from ulf.core.protocol import (
+from lfx.core.protocol import (
     Point, Range, Diagnostic, DiagnosticSeverity, Request, Notification
 )
 import unittest

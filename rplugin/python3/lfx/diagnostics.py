@@ -77,8 +77,8 @@ class DiagnosticsPresenter(object):
                 'bufnr': bufnr
             })
 
-        self._vim.api.buf_set_var(bufnr, 'ulf_diagnostics', loclist)
-        self._vim.call('ale#other_source#ShowResults', bufnr, 'ulf', loclist)
+        self._vim.api.buf_set_var(bufnr, 'lfx_diagnostics', loclist)
+        self._vim.call('ale#other_source#ShowResults', bufnr, 'lfx', loclist)
 
     def select(self, direction: int) -> None:
         pass

@@ -1,5 +1,5 @@
 import unittest
-from ulf.editor import VimEditor
+from lfx.editor import VimEditor
 
 CONTENT1 = """Recusandae vel sit ullam.
 Minus modi est omnis.
@@ -9,7 +9,7 @@ Aut nam itaque quo fugit nihil sint dignissimos.
 Id aspernatur commodi harum."""
 
 
-class MockULF:
+class MockLFX:
     def __init__(self, vim=None):
         self.vim = vim
 
@@ -23,8 +23,8 @@ def apply_edit(editor, lines, edit):
 class ApplyEditTests(unittest.TestCase):
 
     def setUp(self):
-        self.ulf = MockULF()
-        self.editor = VimEditor(self.ulf)
+        self.lfx = MockLFX()
+        self.editor = VimEditor(self.lfx)
 
     def test_new_text(self):
         lines1 = []

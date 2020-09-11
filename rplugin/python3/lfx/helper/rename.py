@@ -1,4 +1,4 @@
-from ..ulf import RequestHelper, ULF
+from ..lfx import RequestHelper, LFX
 from ..core.views import text_document_position_params
 from ..core.protocol import RequestMethod
 from ..core.logging import debug
@@ -14,7 +14,7 @@ class PrepareRenameHelper(RequestHelper,
 
     def is_enabled(self) -> bool:
         view = self.current_view()
-        session = self.ulf.session_for_view(view, self.capability)
+        session = self.lfx.session_for_view(view, self.capability)
         provider = session.get_capability(self.capability)
         return provider and type(provider) == dict and provider.get('prepareProvider', False)
 
@@ -29,8 +29,8 @@ class PrepareRenameHelper(RequestHelper,
 
 class RenameHelper(RequestHelper, method=RequestMethod.RENAME, capability='renameProvider'):
 
-    def __init__(self, ulf: ULF, vim: Nvim) -> None:
-        super().__init__(ulf, vim)
+    def __init__(self, lfx: LFX, vim: Nvim) -> None:
+        super().__init__(lfx, vim)
 
     def params(self, options) -> Dict[str, Any]:
         view = self.current_view()
@@ -43,4 +43,4 @@ class RenameHelper(RequestHelper, method=RequestMethod.RENAME, capability='renam
         changes = parse_workspace_edit(response)
         # debug(f'changes: {changes}')
 
-        self.vim.async_call(self.ulf.editor.apply_workspace_edits, changes)
+        self.vim.async_call(self.lfx.editor.apply_workspace_edits, changes)

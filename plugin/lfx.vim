@@ -1,11 +1,11 @@
 "=============================================================================
-" File: plugin/ulf.vim
+" File: plugin/lfx.vim
 " License: MIT license
 "=============================================================================
 
-if exists('g:loaded_ulf')
+if exists('g:loaded_lfx')
   finish
 endif
-let g:loaded_ulf = 1
+let g:loaded_lfx = 1
 
-call ulf#enable()
+call lfx#enable()

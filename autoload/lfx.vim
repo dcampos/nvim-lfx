@@ -1,54 +1,54 @@
 "=============================================================================
-" File: autoload/ulf.vim
+" File: autoload/lfx.vim
 " License: MIT
-" Description: autoload'able functions for ULF.
+" Description: autoload'able functions for LFX.
 "=============================================================================
 
-let g:ulf#completion_results = []
+let g:lfx#completion_results = []
 
-function! ulf#enable() abort
-    augroup ulf
+function! lfx#enable() abort
+    augroup lfx
         autocmd!
-        autocmd BufEnter,BufWinEnter,FileType * silent! call ULF_handle_did_open() 
-        autocmd BufWipeout,BufDelete,BufUnload * silent! call ULF_handle_did_close()
-        autocmd VimLeavePre * silent! call ULF_handle_leave() 
+        autocmd BufEnter,BufWinEnter,FileType * silent! call LFX_handle_did_open() 
+        autocmd BufWipeout,BufDelete,BufUnload * silent! call LFX_handle_did_close()
+        autocmd VimLeavePre * silent! call LFX_handle_leave() 
     augroup END
 
-    command! ULFHover call ULF_hover()
-    command! ULFSignatureHelp call ULF_signature_help({}, v:false, 0.2)
-    command! ULFGotoDefinition call ULF_goto_definition()
-    command! ULFGotoTypeDefinition call ULF_goto_type_definition()
-    command! ULFGotoImplementation call ULF_goto_implementation()
-    command! ULFGotoDeclaration call ULF_goto_declaration()
+    command! LFXHover call LFX_hover()
+    command! LFXSignatureHelp call LFX_signature_help({}, v:false, 0.2)
+    command! LFXGotoDefinition call LFX_goto_definition()
+    command! LFXGotoTypeDefinition call LFX_goto_type_definition()
+    command! LFXGotoImplementation call LFX_goto_implementation()
+    command! LFXGotoDeclaration call LFX_goto_declaration()
     command! -nargs=1 -complete=customlist,<sid>complete_symbols
-                \ ULFWorkspaceSymbol call ULF_workspace_symbol({'query': <q-args>})
-    command! ULFReferences call ULF_references()
-    command! ULFDocumentHighlight call ULF_document_highlight()
-    command! -nargs=? ULFRename call s:request_rename(<q-args>)
-    command! ULFCodeActions call ULF_code_actions({'visual': v:false})
-    command! ULFCodeActionsVisual call ULF_code_actions({'visual': v:true})
-    command! ULFFormat call ULF_format()
-    command! ULFFormatRange call ULF_format_range()
+                \ LFXWorkspaceSymbol call LFX_workspace_symbol({'query': <q-args>})
+    command! LFXReferences call LFX_references()
+    command! LFXDocumentHighlight call LFX_document_highlight()
+    command! -nargs=? LFXRename call s:request_rename(<q-args>)
+    command! LFXCodeActions call LFX_code_actions({'visual': v:false})
+    command! LFXCodeActionsVisual call LFX_code_actions({'visual': v:true})
+    command! LFXFormat call LFX_format()
+    command! LFXFormatRange call LFX_format_range()
 
-    hi default ULFActiveParameter gui=bold,underline
+    hi default LFXActiveParameter gui=bold,underline
 endfunction
 
 function! s:complete_symbols(arglead, line, pos) abort
-    let target = 'ulf#workspace_symbol#results'
-    call ULF_workspace_symbol({'query': a:arglead, 'target': target}, v:true)
+    let target = 'lfx#workspace_symbol#results'
+    call LFX_workspace_symbol({'query': a:arglead, 'target': target}, v:true)
     let results = get(g:, target, [])
     let candidates = map(results, 'get(v:val, "name")')
     return candidates
 endfunction
 
 function! s:request_rename(new_name) abort
-    unlet! g:ulf#prepare_rename#response
+    unlet! g:lfx#prepare_rename#response
 
     if empty(a:new_name)
         let l:new_name = ''
-        call ULF_prepare_rename({'target': 'ulf#prepare_rename#response'}, v:true)
-        if exists('g:ulf#prepare_rename#response')
-            let response = g:ulf#prepare_rename#response
+        call LFX_prepare_rename({'target': 'lfx#prepare_rename#response'}, v:true)
+        if exists('g:lfx#prepare_rename#response')
+            let response = g:lfx#prepare_rename#response
             if type(response) == type(v:null)
                 echohl WarningMsg | echom 'Rename not possible here!' | echohl None
                 return
@@ -69,17 +69,17 @@ function! s:request_rename(new_name) abort
     endif
 
     if l:new_name !=# ''
-        call ULF_rename({'new_name': l:new_name})
+        call LFX_rename({'new_name': l:new_name})
     endif
 endfunction
 
-function! ulf#attach_buffer(bufnr) abort
-    augroup ulf_buffer
+function! lfx#attach_buffer(bufnr) abort
+    augroup lfx_buffer
         execute 'autocmd! * <buffer=' . a:bufnr . '>'
-        execute 'autocmd BufWritePre <buffer=' . a:bufnr . '> call ULF_handle_will_save()'
-        execute 'autocmd BufWritePost <buffer=' . a:bufnr . '> call ULF_handle_did_save()'
+        execute 'autocmd BufWritePre <buffer=' . a:bufnr . '> call LFX_handle_will_save()'
+        execute 'autocmd BufWritePost <buffer=' . a:bufnr . '> call LFX_handle_did_save()'
         execute 'autocmd TextChanged,TextChangedP,TextChangedI <buffer=' . a:bufnr
-                    \ . '> call ULF_handle_did_change()'
+                    \ . '> call LFX_handle_did_change()'
         execute 'autocmd CompleteDone <buffer=' . a:bufnr
                     \ . '> call s:handle_complete_done()'
         execute 'autocmd CompleteChanged <buffer=' . a:bufnr
@@ -93,35 +93,35 @@ function! ulf#attach_buffer(bufnr) abort
     augroup END
 endfunction
 
-function! ulf#omni(findstart, base) abort
+function! lfx#omni(findstart, base) abort
     if a:findstart
         return s:find_start()
     endif
 
     let col = strchars(s:get_text_to_cursor() . a:base)
-    call ULF_complete_sync({
-                \ 'target': 'ulf#completion_results',
+    call LFX_complete_sync({
+                \ 'target': 'lfx#completion_results',
                 \ 'process_response': v:true,
                 \ 'base': a:base,
                 \ 'col': col
                 \ }, v:true)
-    let results = get(g:, 'ulf#completion_results', [])
+    let results = get(g:, 'lfx#completion_results', [])
     return results
 endfunction
 
-function! ulf#complete() abort
-    call ULF_complete({'callback': 'ulf#completion_callback', 'process_response': v:true})
+function! lfx#complete() abort
+    call LFX_complete({'callback': 'lfx#completion_callback', 'process_response': v:true})
     return ''
 endfunction
 
-function! ulf#complete_sync() abort
-    call ULF_complete_sync({'target': 'ulf#completion_results', 'process_response': v:true}, v:true)
-    let results = get(g:, 'ulf#completion_results', [])
-    call ulf#completion_callback(results)
+function! lfx#complete_sync() abort
+    call LFX_complete_sync({'target': 'lfx#completion_results', 'process_response': v:true}, v:true)
+    let results = get(g:, 'lfx#completion_results', [])
+    call lfx#completion_callback(results)
     return ''
 endfunction
 
-function! ulf#completion_callback(items) abort
+function! lfx#completion_callback(items) abort
     if type(a:items) !=# type(v:null)
         let match_start = s:find_start() + 1
         call complete(match_start, a:items)
@@ -130,28 +130,28 @@ endfunction
 
 let s:count = 0
 
-function! ulf#code_action_callback(results) abort
+function! lfx#code_action_callback(results) abort
     call s:dismiss_code_actions()
     let available = len(filter(a:results, '!empty(v:val)')) > 0
     if available
-        call ulf#virtualtext#place_lightbulb(0, line('.') - 1)
+        call lfx#virtualtext#place_lightbulb(0, line('.') - 1)
     endif
 endfunction
 
-function! ulf#show_popup(content, opts) abort
+function! lfx#show_popup(content, opts) abort
     call s:close_popup()
     let content = a:content
     if empty(content) || content == [''] | return | endif
-    let popup = ulf#popup#new(a:content, extend({
+    let popup = lfx#popup#new(a:content, extend({
                 \ 'floating': 1,
                 \ 'enter': v:false,
                 \ }, a:opts))
     call popup.open()
-    let b:__ulf_popup = popup
+    let b:__lfx_popup = popup
 endfunction
 
 function! s:close_popup() abort
-    call ulf#popup#close_current_popup()
+    call lfx#popup#close_current_popup()
 endfunction
 
 function! s:fetch_code_actions_visual() abort
@@ -164,37 +164,37 @@ function! s:fetch_code_actions_visual() abort
 endfunction
 
 function! s:fetch_code_actions(visual) abort
-    call ULF_code_actions({
-                \ 'callback': 'ulf#code_action_callback',
+    call LFX_code_actions({
+                \ 'callback': 'lfx#code_action_callback',
                 \ 'include_results': v:true,
                 \ 'visual': a:visual
                 \ }, v:false, 0.2)
 endfunction
 
 function! s:dismiss_code_actions() abort
-    call ulf#virtualtext#clear_lightbulbs(0)
+    call lfx#virtualtext#clear_lightbulbs(0)
 endfunction
 
 function! s:handle_complete_done() abort
-    unlet! b:__ulf_pmenu_info
-    call ULF_handle_complete_done()
+    unlet! b:__lfx_pmenu_info
+    call LFX_handle_complete_done()
 endfunction
 
 function! s:handle_complete_changed(event) abort
-    let b:__ulf_pmenu_info = {
+    let b:__lfx_pmenu_info = {
                 \ 'width': a:event.width,
                 \ 'height': a:event.height,
                 \ 'col': a:event.col,
                 \ 'row': a:event.row
                 \ }
-    if exists('b:__ulf_popup')
-        call timer_start(1, {->b:__ulf_popup.update()})
+    if exists('b:__lfx_popup')
+        call timer_start(1, {->b:__lfx_popup.update()})
     endif
     call s:resolve_completion(a:event.completed_item)
 endfunction
 
 function! s:resolve_completion(completed_item) abort
-    unlet! g:ulf#completion#_resolved_item
+    unlet! g:lfx#completion#_resolved_item
     let user_data = get(a:completed_item, 'user_data', {})
     if type(user_data) !=# v:t_dict
         silent! let user_data = json_decode(user_data)
@@ -204,7 +204,7 @@ function! s:resolve_completion(completed_item) abort
     endif
     let lspitem = get(user_data, 'lspitem')
     if !empty(lspitem)
-        call ULF_resolve_completion({'target': 'ulf#completion#_resolved_item',
+        call LFX_resolve_completion({'target': 'lfx#completion#_resolved_item',
                     \ 'completion_item': lspitem})
     endif
 endfunction

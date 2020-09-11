@@ -1,0 +1,177 @@
+*lfx.txt* Remote Python-based LSP client for vim.
+*lfx*
+
+LFX - LFX: LSP Frontend
+
+===============================================================================
+CONTENTS                                                         *lfx-contents*
+
+    1. Introduction.........................|lfx-introduction|
+    2. Usage................................|lfx-usage|
+    2. Functions............................|lfx-functions|
+    3. Commands.............................|lfx-commands|
+    3. License..............................|lfx-introduction|
+
+
+===============================================================================
+1. Introduction                                              *lfx-introduction*
+
+LFX is a Python-based remote plugin that enables using Language Server Protocol
+(LSP) inside Neovim. It's mostly a port of Sublime Text's own LSP plugin to
+Neovim, which greatly speeded up development and allowed it to be as feature
+complete as possible in no time.
+
+
+===============================================================================
+1. Usage                                                            *lfx-usage*
+
+The first that must be done in order to use LFX is configuring language servers
+you want to use, as it comes with no server configured by default. You do that
+by using the |g:lfx#configs| variable. For example:
+>
+    let g:lfx#configs =
+      \ {
+      \     'pyls': {
+      \         'command': ['python3', '-m', 'pyls'],
+      \         'filetypes': ['python'],
+      \         'enabled': v:true,
+      \         'initializationOptions': {
+      \         },
+      \         'settings': {
+      \         },
+      \     },
+      \     'rls': {
+      \         'command': ['rustup', 'run', 'stable', 'rls'],
+      \         'filetypes': ['rust', 'toml'],
+      \         'enabled': v:true,
+      \         'initializationOptions': {
+      \          },
+      \          'settings': {
+      \          },
+      \     },
+      \ }
+<
+                                                            *lfx-root-patterns*
+
+In order to identify the root of the current workspace, LFX uses the
+|g:lfx#root_patterns| variable. The configuration is set on per language basis,
+with an '*' being used for patterns that apply to every language.
+>
+    let g:lfx#root_patterns = {
+      \     '*': ['.gitmodules', '.git'],
+      \     'rust': ['Cargo.toml']
+      \ }
+<
+                                                                  *lfx-logging*
+
+Logging can be controlled through the |g:lfx#log| series of global variables,
+which allow you to determine where and what to log. By default, logging is
+disabled.
+>
+    let g:lfx#log#file = '/var/log/lfx.log'
+    let g:lfx#log#debug = v:true
+    let g:lfx#log#payloads = v:true
+    let g:lfx#log#server = v:true
+    let g:lfx#log#stderr = v:true
+<
+                                                                 *lfx-mappings*
+
+LFX comes with no mapping configured out of the box. You can use the
+|LFXAttachBuffer| |autocmd| to set up your mappings for a particular buffer
+whenever that buffer atthached to a language servers. The variable
+|g:lfx#attached_bufnr| holds the buffer number of the buffer currently being
+attached. For example:
+>
+    autocmd vimrc User LFXAttachBuffer call s:setup_lsp(g:lfx#attached_bufnr)
+
+    function! s:setup_lsp(bufnr) abort
+        let opts = {'silent': v:true, 'noremap': v:true}
+
+        call nvim_buf_set_keymap(a:bufnr, 'n', '<M-r>',
+            \ ':LFXRename<cr>', opts)
+        call nvim_buf_set_keymap(a:bufnr, 'n', '<M-a>',
+            \ ':LFXCodeActions<cr>', opts)
+        call nvim_buf_set_keymap(a:bufnr, 'v', '<M-a>',
+            \ ':<c-u>LFXCodeActionsVisual<cr>', opts)
+        call nvim_buf_set_keymap(a:bufnr, 'n', 'K',
+            \ ':LFXHover<cr>', opts)
+        call nvim_buf_set_keymap(a:bufnr, 'n', 'gd',
+            \ ':LFXGotoDefinition<cr>', opts)
+        call nvim_buf_set_keymap(a:bufnr, 'n', 'gr',
+            \ ':LFXReferences<cr>', opts)
+        call nvim_buf_set_keymap(a:bufnr, 'n', 'gs',
+            \ ':LFXWorkspaceSymbol <c-r><c-w><cr>', opts)
+
+        for char in [',', '(', ')']
+            call nvim_buf_set_keymap(a:bufnr, 'i', char,
+                \ char. '<c-o>:LFXSignatureHelp<cr>', opts)
+        endfor
+    endfunction
+<
+
+===============================================================================
+1. Functions                                                    *lfx-functions*
+
+TODO
+
+
+===============================================================================
+1. Commands                                                      *lfx-commands*
+
+LFXHover                                                             *LFXHover*
+
+TODO
+
+LFXSignatureHelp                                             *LFXSignatureHelp*
+
+TODO
+
+LFXGotoDefinition                                           *LFXGotoDefinition*
+
+TODO
+
+LFXGotoTypeDefinition                                   *LFXGotoTypeDefinition*
+
+TODO
+
+LFXGotoImplementation                                   *LFXGotoImplementation*
+
+TODO
+
+LFXGotoDeclaration                                         *LFXGotoDeclaration*
+
+TODO
+
+LFXWorkspaceSymbol                                         *LFXWorkspaceSymbol*
+
+TODO
+
+LFXReferences                                                   *LFXReferences*
+
+TODO
+
+LFXDocumentHighlight                                     *LFXDocumentHighlight*
+
+TODO
+
+LFXCodeActions                                                 *LFXCodeActions*
+
+TODO
+
+LFXCodeActionsVisual                                     *LFXCodeActionsVisual*
+
+TODO
+
+LFXFormat                                                           *LFXFormat*
+
+TODO
+
+LFXFormatRange                                                 *LFXFormatRange*
+
+TODO
+
+
+===============================================================================
+1. Licence                                                        *lfx-license*
+
+LFX is licensed under the MIT license.

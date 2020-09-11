@@ -1,4 +1,4 @@
-from ..ulf import RequestHelper
+from ..lfx import RequestHelper
 from ..core.views import text_document_position_params
 from ..core.protocol import RequestMethod
 # from ..core.logging import debug
@@ -21,7 +21,7 @@ class GotoDefinitionHelper(RequestHelper, method=RequestMethod.DEFINITION, capab
 
             if len(locations) == 1:
                 file_path, _, pos = locations[0]
-                self.ulf.editor.goto(file_path, pos[0], pos[1])
+                self.lfx.editor.goto(file_path, pos[0], pos[1])
             else:
                 self._display_locations(locations)
                 pass
@@ -34,7 +34,7 @@ class GotoDefinitionHelper(RequestHelper, method=RequestMethod.DEFINITION, capab
             else:
                 file_path = uri_to_filename(response["uri"])
                 start = Point.from_lsp(response["range"]["start"])
-            row, col = self.ulf.editor.adjust_from_lsp(file_path, start.row, start.col)
+            row, col = self.lfx.editor.adjust_from_lsp(file_path, start.row, start.col)
             row += 1
             col += 1
             file_path_and_row_col = "{}:{}:{}".format(file_path, row, col)

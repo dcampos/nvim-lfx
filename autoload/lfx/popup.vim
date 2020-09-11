@@ -1,7 +1,7 @@
 "=============================================================================
-" File: autoload/ulf/popup.vim
+" File: autoload/lfx/popup.vim
 " License: MIT
-" Description: popup functions for ULF.
+" Description: popup functions for LFX.
 " Origin: Copied and adapted from gitmessenger.vim.
 "=============================================================================
 
@@ -64,10 +64,10 @@ endfunction
 let s:popup.into = funcref('s:popup__into')
 
 function! s:popup__window_size() dict abort
-    let has_max_width = exists('g:ulf#popup#max_width') && type(g:ulf#popup#max_width) == v:t_number
+    let has_max_width = exists('g:lfx#popup#max_width') && type(g:lfx#popup#max_width) == v:t_number
     if has_max_width
         " ` - 1` for considering right margin
-        let max_width = g:ulf#popup#max_width - self.opts.paddings[0]
+        let max_width = g:lfx#popup#max_width - self.opts.paddings[0]
     endif
 
     let width = 0
@@ -87,9 +87,9 @@ function! s:popup__window_size() dict abort
     " right margin
     let width += self.opts.paddings[0]
 
-    let has_max_height = exists('g:ulf#popup#max_height') && type(g:ulf#popup#max_height) == v:t_number
-    if has_max_height && height > g:ulf#popup#max_height
-        let height = g:ulf#popup#max_height
+    let has_max_height = exists('g:lfx#popup#max_height') && type(g:lfx#popup#max_height) == v:t_number
+    if has_max_height && height > g:lfx#popup#max_height
+        let height = g:lfx#popup#max_height
     endif
 
     return [width, height]
@@ -97,10 +97,10 @@ endfunction
 let s:popup.window_size = funcref('s:popup__window_size')
 
 function! s:popup__floating_win_opts(width, height) dict abort
-    if exists('b:__ulf_pmenu_info')
-        let pum_height = b:__ulf_pmenu_info.height
-        let pum_row = b:__ulf_pmenu_info.row
-        let pum_col = b:__ulf_pmenu_info.col
+    if exists('b:__lfx_pmenu_info')
+        let pum_height = b:__lfx_pmenu_info.height
+        let pum_row = b:__lfx_pmenu_info.row
+        let pum_col = b:__lfx_pmenu_info.col
     endif
 
     let has_space_below = self.opened_at[0] + a:height <= &lines
@@ -158,7 +158,7 @@ endfunction
 let s:popup.get_opener_winnr = funcref('s:popup__get_opener_winnr')
 
 function! s:popup__apply_highlights(bufnr) dict abort
-    let ns_id = nvim_create_namespace('ulf#popup#ns_id')
+    let ns_id = nvim_create_namespace('lfx#popup#ns_id')
     call nvim_buf_clear_namespace(a:bufnr, ns_id, 0, -1)
     if has_key(self.opts, 'highlights')
         for highlight in self.opts.highlights
@@ -221,13 +221,13 @@ function! s:popup__open() dict abort
 
     if has_key(self.opts, 'mappings')
         for m in keys(self.opts.mappings)
-            execute printf('nnoremap <buffer=%s><silent><nowait>%s :<C-u>call b:__ulf_popup.opts.mappings["%s"][0]()<CR>', bufnr, m, m)
+            execute printf('nnoremap <buffer=%s><silent><nowait>%s :<C-u>call b:__lfx_popup.opts.mappings["%s"][0]()<CR>', bufnr, m, m)
         endfor
-        execute printf('nnoremap <buffer=%s><silent><nowait>? :<C-u>call b:__ulf_popup.echo_help()<CR>', bufnr)
+        execute printf('nnoremap <buffer=%s><silent><nowait>? :<C-u>call b:__lfx_popup.echo_help()<CR>', bufnr)
     endif
 
     " Ensure to close popup
-    call nvim_buf_set_var(bufnr, '__ulf_popup', self)
+    call nvim_buf_set_var(bufnr, '__lfx_popup', self)
 
     call self.apply_highlights(bufnr)
 
@@ -339,7 +339,7 @@ let s:popup.pad_content = funcref('s:popup__pad_content')
 "   prefer_top?: boolean;
 "   paddings?: [number, number]
 " }
-function! ulf#popup#new(contents, opts) abort
+function! lfx#popup#new(contents, opts) abort
     let p = deepcopy(s:popup)
     let opts = { 'floating': v:true, 'paddings': [1, 1] }
     call extend(opts, a:opts)
@@ -352,11 +352,11 @@ endfunction
 
 " When current window is popup, close the window.
 " Returns true when popup window was closed
-function! ulf#popup#close_current_popup() abort
-    if !exists('b:__ulf_popup')
+function! lfx#popup#close_current_popup() abort
+    if !exists('b:__lfx_popup')
         return 0
     endif
-    call b:__ulf_popup.close()
+    call b:__lfx_popup.close()
     " TODO?: Back to opened_at pos by setpos()
     return 1
 endfunction

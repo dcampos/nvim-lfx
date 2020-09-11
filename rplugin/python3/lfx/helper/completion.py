@@ -1,4 +1,4 @@
-from ..ulf import RequestHelper
+from ..lfx import RequestHelper
 from ..core.typing import Dict, Any
 from ..core.protocol import RequestMethod
 # from ..core.logging import debug
@@ -14,7 +14,7 @@ class ResolveCompletionHelper(RequestHelper,
 
     def is_enabled(self) -> bool:
         view = self.current_view()
-        session = self.ulf.session_for_view(view, self.capability)
+        session = self.lfx.session_for_view(view, self.capability)
         provider = session.get_capability('completionProvider')
         return provider and provider.get('resolveProvider', False)
 
@@ -27,8 +27,8 @@ class ResolveCompletionHelper(RequestHelper,
 
 class CompletionHelper(RequestHelper, method=RequestMethod.COMPLETION, capability='completionProvider'):
 
-    def __init__(self, ulf, vim):
-        super().__init__(ulf, vim)
+    def __init__(self, lfx, vim):
+        super().__init__(lfx, vim)
 
     def params(self, options: Dict[str, Any]):
         view = self.current_view()

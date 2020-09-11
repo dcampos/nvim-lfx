@@ -1,4 +1,4 @@
-from ..ulf import RequestHelper
+from ..lfx import RequestHelper
 from ..core.typing import Any, Dict
 from ..core.protocol import RequestMethod
 # from ..core.logging import debug
@@ -8,8 +8,8 @@ from ..core.edit import parse_text_edit, sort_by_application_order
 
 class DocumentFormattingHelper(RequestHelper, method=RequestMethod.FORMATTING, capability='documentFormattingProvider'):
 
-    def __init__(self, ulf, _vim):
-        super().__init__(ulf, _vim)
+    def __init__(self, lfx, _vim):
+        super().__init__(lfx, _vim)
 
     def params(self, options) -> Dict[str, Any]:
         view = self.current_view()
@@ -22,7 +22,7 @@ class DocumentFormattingHelper(RequestHelper, method=RequestMethod.FORMATTING, c
         edits = list(parse_text_edit(change) for change in response) if response else []
         edits = sort_by_application_order(edits)
 
-        self.vim.async_call(lambda: self.ulf.editor.apply_document_edits(
+        self.vim.async_call(lambda: self.lfx.editor.apply_document_edits(
             self.current_view().file_name(), edits))
 
 

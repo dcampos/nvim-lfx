@@ -12,13 +12,13 @@ from pynvim import Nvim
 from pynvim.api import Buffer
 from threading import Timer
 
-TAG = '[ULF]'
+TAG = '[LFX]'
 
 
 class VimEditor(Editor):
-    def __init__(self, ulf) -> None:
-        self.ulf = ulf
-        self.vim: Nvim = self.ulf.vim
+    def __init__(self, lfx) -> None:
+        self.lfx = lfx
+        self.vim: Nvim = self.lfx.vim
         self.window = VimWindow(self)
         # TODO: transfer these to the helpers once they are single instances
         # self.symbol_hl_id = self.vim.new_highlight_source()
@@ -154,12 +154,12 @@ class VimEditor(Editor):
         assert lines == new_lines
 
     def find_root(self, view: 'VimView') -> str:
-        patterns = (self.ulf.root_patterns.get('*') +
-                    self.ulf.root_patterns.get(view.language_id(), []))
+        patterns = (self.lfx.root_patterns.get('*') +
+                    self.lfx.root_patterns.get(view.language_id(), []))
         debug("view={}, language_id={}, root_patterns={}".format(
             view.file_name(),
             view.language_id(),
-            self.ulf.root_patterns))
+            self.lfx.root_patterns))
         head, tail = os.path.split(view.file_name())
         found = head
         while tail != '':
@@ -280,8 +280,8 @@ class VimView(View):
         return self.vim.api.buf_is_valid(self._bufnr)
 
     def available_sessions(self, capability: str = None) -> Iterator[Session]:
-        yield from self.editor.ulf.sessions_for_view(self, capability)
+        yield from self.editor.lfx.sessions_for_view(self, capability)
 
     def diagnostics(self) -> Dict[str, List[Diagnostic]]:
-        diagnostics = self.editor.ulf.diagnostics.get()
+        diagnostics = self.editor.lfx.diagnostics.get()
         return diagnostics.get(self.file_name(), {})

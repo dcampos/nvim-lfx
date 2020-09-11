@@ -23,23 +23,23 @@ from .util import to_char_index, debounce
 
 
 @pynvim.plugin
-class ULF:
+class LFX:
 
     def __init__(self, vim: Nvim):
         self.vim = vim
         vars = self.vim.vars
         self.settings = settings
-        self.settings.log_debug = vars.get('ulf#log#debug', True)
-        self.settings.log_payloads = vars.get('ulf#log#payloads', False)
-        self.settings.log_server = vars.get('ulf#log#server', False)
-        self.settings.log_stderr = vars.get('ulf#log#stderr', True)
-        self.log_file = vars.get('ulf#log#file')
+        self.settings.log_debug = vars.get('lfx#log#debug', True)
+        self.settings.log_payloads = vars.get('lfx#log#payloads', False)
+        self.settings.log_server = vars.get('lfx#log#server', False)
+        self.settings.log_stderr = vars.get('lfx#log#stderr', True)
+        self.log_file = vars.get('lfx#log#file')
         set_log_file(self.log_file)
         set_exception_logging(True)
         set_debug_logging(True)
         self.client_configs = ClientConfigs()  # type: ClientConfigs
         self._update_configs()
-        self.root_patterns = vars.get('ulf#root_patterns', {'*': ['.gitmodules', '.git']})
+        self.root_patterns = vars.get('lfx#root_patterns', {'*': ['.gitmodules', '.git']})
         self.editor = VimEditor(self)
         self.window = VimWindow(self.editor)
         self.config_manager = VimConfigManager(self.window, self.client_configs.all)
@@ -67,7 +67,7 @@ class ULF:
                 on_stderr_log=on_stderr_log)
 
         import_helpers(self.vim.funcs.globpath(self.vim.options['runtimepath'],
-                                               'rplugin/python3/ulf/helper/*.py'))
+                                               'rplugin/python3/lfx/helper/*.py'))
 
         self.diagnostics_presenter = DiagnosticsPresenter(self.window, self.documents)
         self.diagnostics = DiagnosticsStorage(self.diagnostics_presenter)
@@ -86,41 +86,41 @@ class ULF:
         # instances = RequestHelper.instantiate_all(self, vim)
         # debug('instances = %s' % instances)
 
-        self.vim.vars['ulf#_channel_id'] = self.vim.channel_id
+        self.vim.vars['lfx#_channel_id'] = self.vim.channel_id
 
     def _on_attach(self, view: VimView) -> None:
         debug('attached buffer %d' % view.buffer_id())
-        self.vim.call('ulf#attach_buffer', view.buffer_id())
-        self.vim.vars['ulf#attached_bufnr'] = view.buffer_id()
-        self.vim.command('doautocmd <nomodeline> User ULFAttachBuffer')
-        del self.vim.vars['ulf#attached_bufnr']
+        self.vim.call('lfx#attach_buffer', view.buffer_id())
+        self.vim.vars['lfx#attached_bufnr'] = view.buffer_id()
+        self.vim.command('doautocmd <nomodeline> User LFXAttachBuffer')
+        del self.vim.vars['lfx#attached_bufnr']
 
     def _on_detach(self, view: VimView) -> None:
         pass
 
-    @pynvim.function('ULF_handle_did_open', sync=True, eval='expand("<abuf>")')
+    @pynvim.function('LFX_handle_did_open', sync=True, eval='expand("<abuf>")')
     def _on_did_open(self, args, bufnr):
         debug('buffer {} opened'.format(bufnr))
         view = self.window.view_for_buffer(int(bufnr))
         self.manager.activate_view(view)
         self.documents.handle_did_open(view)
 
-    @pynvim.function('ULF_handle_will_save', eval='expand("<abuf>")')
+    @pynvim.function('LFX_handle_will_save', eval='expand("<abuf>")')
     def _on_will_save(self, args, bufnr):
         view = self.window.view_for_buffer(int(bufnr))
         self.documents.handle_will_save(view, reason=1)
 
-    @pynvim.function('ULF_handle_did_save', eval='expand("<abuf>")')
+    @pynvim.function('LFX_handle_did_save', eval='expand("<abuf>")')
     def _on_did_save(self, args, bufnr):
         view = self.window.view_for_buffer(int(bufnr))
         self.documents.handle_did_save(view)
 
-    @pynvim.function('ULF_handle_did_change', eval='expand("<abuf>")')
+    @pynvim.function('LFX_handle_did_change', eval='expand("<abuf>")')
     def _on_did_change(self, args, bufnr):
         view = self.window.view_for_buffer(int(bufnr))
         self.documents.handle_did_change(view)
 
-    @pynvim.function('ULF_handle_did_close', eval='expand("<abuf>")')
+    @pynvim.function('LFX_handle_did_close', eval='expand("<abuf>")')
     def _on_did_close(self, args, bufnr):
         if not self.vim.api.buf_is_loaded(int(bufnr)):
             return
@@ -133,14 +133,14 @@ class ULF:
             self.documents.handle_did_close(view)
             self.window.close_view(int(bufnr))
 
-    @pynvim.function('ULF_handle_leave', sync=True)
+    @pynvim.function('LFX_handle_leave', sync=True)
     def _on_vimleave(self, args):
         self.window.valid = False
         self.manager.end_sessions()
 
-    @pynvim.function('ULF_handle_complete_done', sync=True)
+    @pynvim.function('LFX_handle_complete_done', sync=True)
     def _on_complete_done(self, args):
-        resolved_item = self.vim.vars.get('ulf#completion#_resolved_item')
+        resolved_item = self.vim.vars.get('lfx#completion#_resolved_item')
         completed_item = self.vim.vvars.get('completed_item')
         if completed_item and resolved_item:
             view = self.window.active_view()
@@ -149,84 +149,84 @@ class ULF:
                 edits = sort_by_application_order(map(parse_text_edit, edits))
                 self.editor.apply_document_edits(view.file_name(), edits)
 
-    @pynvim.function('ULF_hover')
+    @pynvim.function('LFX_hover')
     def hover(self, args):
         self._send_request(RequestMethod.HOVER, *args)
 
-    @pynvim.function('ULF_signature_help')
+    @pynvim.function('LFX_signature_help')
     def signature_help(self, args):
         self._send_request(RequestMethod.SIGNATURE_HELP, *args)
 
-    @pynvim.function('ULF_goto_definition')
+    @pynvim.function('LFX_goto_definition')
     def goto_definition(self, args):
         self._send_request(RequestMethod.DEFINITION, *args)
 
-    @pynvim.function('ULF_goto_type_definition')
+    @pynvim.function('LFX_goto_type_definition')
     def goto_type_definition(self, args):
         self._send_request(RequestMethod.TYPE_DEFINITION, *args)
 
-    @pynvim.function('ULF_goto_implementation')
+    @pynvim.function('LFX_goto_implementation')
     def goto_implementation(self, args):
         self._send_request(RequestMethod.IMPLEMENTATION, *args)
 
-    @pynvim.function('ULF_goto_declaration')
+    @pynvim.function('LFX_goto_declaration')
     def goto_declaration(self, args):
         self._send_request(RequestMethod.DECLARATION, *args)
 
-    @pynvim.function('ULF_workspace_symbol', sync=True)
+    @pynvim.function('LFX_workspace_symbol', sync=True)
     def workspace_symbol(self, args):
         self._send_request(RequestMethod.WORKSPACE_SYMBOL, *args)
 
-    @pynvim.function('ULF_document_symbol', sync=True)
+    @pynvim.function('LFX_document_symbol', sync=True)
     def document_symbol(self, args):
         self._send_request(RequestMethod.DOCUMENT_SYMBOL, *args)
 
-    @pynvim.function('ULF_references')
+    @pynvim.function('LFX_references')
     def references(self, args):
         self._send_request(RequestMethod.REFERENCES, *args)
 
-    @pynvim.function('ULF_document_highlight')
+    @pynvim.function('LFX_document_highlight')
     def document_highlight(self, args):
         self._send_request(RequestMethod.DOCUMENT_HIGHLIGHT, *args)
 
-    @pynvim.function('ULF_document_color')
+    @pynvim.function('LFX_document_color')
     def document_color(self, args):
         self._send_request(RequestMethod.DOCUMENT_COLOR, *args)
 
-    @pynvim.function('ULF_rename')
+    @pynvim.function('LFX_rename')
     def rename(self, args):
         self._send_request(RequestMethod.RENAME, *args)
 
-    @pynvim.function('ULF_prepare_rename', sync=True)
+    @pynvim.function('LFX_prepare_rename', sync=True)
     def prepare_rename(self, args):
         self._send_request(RequestMethod.PREPARE_RENAME, *args)
 
-    @pynvim.function('ULF_format')
+    @pynvim.function('LFX_format')
     def format(self, args):
         self._send_request(RequestMethod.FORMATTING, *args)
 
-    @pynvim.function('ULF_format_range')
+    @pynvim.function('LFX_format_range')
     def format_range(self, args):
         self._send_request(RequestMethod.RANGE_FORMATTING, *args)
 
-    @pynvim.function('ULF_code_actions')
+    @pynvim.function('LFX_code_actions')
     def code_actions(self, args):
         self._send_request(RequestMethod.CODE_ACTION, *args)
 
-    @pynvim.function('ULF_complete')
+    @pynvim.function('LFX_complete')
     def complete(self, args):
         self._send_request(RequestMethod.COMPLETION, *args)
 
-    @pynvim.function('ULF_complete_sync', sync=True)
+    @pynvim.function('LFX_complete_sync', sync=True)
     def complete_sync(self, args):
         debug(args)
         self._send_request(RequestMethod.COMPLETION, *args)
 
-    @pynvim.function('ULF_resolve_completion', sync=True)
+    @pynvim.function('LFX_resolve_completion', sync=True)
     def resolve_completion(self, args: List[Dict[str, Any]] = [{}]):
         self._send_request(RequestMethod.RESOLVE, *args)
 
-    @pynvim.function('ULF_show_diagnostics')
+    @pynvim.function('LFX_show_diagnostics')
     def show_diagnostics(self, args):
         bufnr = int(args[0])
         if bufnr == -1:
@@ -235,7 +235,7 @@ class ULF:
         if view:
             self.diagnostics_presenter.show_all(view.file_name())
 
-    @pynvim.function('ULF_send_request', sync=True)
+    @pynvim.function('LFX_send_request', sync=True)
     def send_request(self, args):
         self._send_request(*args)
 
@@ -259,7 +259,7 @@ class ULF:
             debug('No helper found for method={}'.format(method))
 
     def _update_configs(self) -> None:
-        configs = self.vim.vars.get('ulf#configs', {})
+        configs = self.vim.vars.get('lfx#configs', {})
         for config in configs.values():
             config['languages'] = []
             for filetype in config.get('filetypes', []):
@@ -284,7 +284,7 @@ def import_helpers(runtime: str) -> None:
 
     for p in paths:
         name = os.path.splitext(os.path.basename(p))[0]
-        module_name = 'ulf.helper.%s' % name
+        module_name = 'lfx.helper.%s' % name
         spec = importlib.util.spec_from_file_location(module_name, p)
 
         if spec:
@@ -295,13 +295,13 @@ def import_helpers(runtime: str) -> None:
 class RequestHelper(metaclass=abc.ABCMeta):
     _registry = {}
 
-    def __init__(self, ulf: ULF, vim: Nvim) -> None:
-        self.ulf = ulf
+    def __init__(self, lfx: LFX, vim: Nvim) -> None:
+        self.lfx = lfx
         self.vim = vim
 
     def current_view(self) -> VimView:
         bufnr = self.vim.current.buffer.number
-        return self.ulf.window.view_for_buffer(int(bufnr))
+        return self.lfx.window.view_for_buffer(int(bufnr))
 
     def cursor_point(self) -> Point:
         cursor = self.vim.current.window.cursor
@@ -335,29 +335,29 @@ class RequestHelper(metaclass=abc.ABCMeta):
     def run(self, options: Dict[str, Any] = {}):
         params = self.params(options)
         view = self.current_view()
-        session = self.ulf.session_for_view(view, self.capability)
+        session = self.lfx.session_for_view(view, self.capability)
         method = self._method
         if session is not None:
-            self.ulf.documents.purge_changes(view)
+            self.lfx.documents.purge_changes(view)
             session.client.send_request(Request(method, params),
                                         lambda res: self.vim.async_call(
                                             self.dispatch_response, res, options),
                                         lambda res: debug(res))
         else:
-            self.ulf.editor.error_message('Not available!')
+            self.lfx.editor.error_message('Not available!')
 
     def run_sync(self, options: Dict[str, Any]):
         params = self.params(options)
         view = self.current_view()
-        session = self.ulf.session_for_view(view, self._capability)
+        session = self.lfx.session_for_view(view, self._capability)
         method = self._method
         if session is not None:
-            self.ulf.documents.purge_changes(view)
+            self.lfx.documents.purge_changes(view)
             session.client.execute_request(Request(method, params),
                                            lambda res: self.dispatch_response(res, options),
                                            lambda res: debug(res))
         else:
-            self.ulf.editor.error_message('Not available!')
+            self.lfx.editor.error_message('Not available!')
 
     def dispatch_response(self, response, options):
         """Dispatches the response according to the options passed"""
@@ -397,11 +397,11 @@ class RequestHelper(metaclass=abc.ABCMeta):
         return response
 
     @classmethod
-    def instance(cls, ulf, vim, *args, **kwargs) -> 'RequestHelper':
+    def instance(cls, lfx, vim, *args, **kwargs) -> 'RequestHelper':
         try:
             return cls._instance
         except AttributeError:
-            cls._instance = cls(ulf, vim, *args, **kwargs)
+            cls._instance = cls(lfx, vim, *args, **kwargs)
             return cls._instance
 
     @classmethod
@@ -420,8 +420,8 @@ class ClientHelper(metaclass=abc.ABCMeta):
     _registry_by_name: Dict[str, Any] = {}
     _registry_generic: List[Any] = []
 
-    def __init__(self, ulf, vim):
-        self.ulf = ulf
+    def __init__(self, lfx, vim):
+        self.lfx = lfx
         self.vim = vim
 
     def setup(self, config_name: str, window: VimWindow, view: VimView) -> bool:
@@ -441,11 +441,11 @@ class ClientHelper(metaclass=abc.ABCMeta):
             return cls._registry_generic
 
     @classmethod
-    def instance(cls, ulf, vim, *args, **kwargs) -> 'ClientHelper':
+    def instance(cls, lfx, vim, *args, **kwargs) -> 'ClientHelper':
         try:
             return cls._instance
         except AttributeError:
-            cls._instance = cls(ulf, vim, *args, **kwargs)
+            cls._instance = cls(lfx, vim, *args, **kwargs)
             return cls._instance
 
     def __init_subclass__(cls, config_name=None, **kwargs):
@@ -458,12 +458,12 @@ class ClientHelper(metaclass=abc.ABCMeta):
 
 class ClientHelperDispacher(object):
 
-    def __init__(self, ulf, vim):
-        self.ulf = ulf
+    def __init__(self, lfx, vim):
+        self.lfx = lfx
         self.vim = vim
 
     def _helper_instances(self, config_name) -> List[ClientHelper]:
-        return list(map(lambda cls: cls.instance(self.ulf, self.vim),
+        return list(map(lambda cls: cls.instance(self.lfx, self.vim),
                         ClientHelper.for_name(config_name)))
 
     def setup(self, config_name: str, window: VimWindow, view: VimView) -> bool:
@@ -487,7 +487,7 @@ class DiagnosticsHelper(ClientHelper):
     def on_initialized(self, config_name: str, window: VimWindow, client: Client) -> None:
         client.on_notification(
             "textDocument/publishDiagnostics",
-            lambda params: self.ulf.diagnostics.receive(config_name, params))
+            lambda params: self.lfx.diagnostics.receive(config_name, params))
 
     def on_exited(self, config_name: str, window: VimWindow) -> None:
         debug('on_exited called: %s' % config_name)

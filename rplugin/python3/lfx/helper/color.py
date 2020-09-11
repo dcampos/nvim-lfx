@@ -1,4 +1,4 @@
-from ..ulf import RequestHelper
+from ..lfx import RequestHelper
 from ..core.protocol import RequestMethod, Range
 from ..core.typing import Any, Dict
 from ..core.logging import debug
@@ -10,9 +10,9 @@ _groups = []
 
 class DocumentColorHelper(RequestHelper, method=RequestMethod.DOCUMENT_COLOR, capability='colorProvider'):
 
-    def __init__(self, ulf, vim, *args, **kwargs) -> None:
-        super().__init__(ulf, vim)
-        self.color_hl_id = self.vim.api.create_namespace('ulf#document_color#ns_id')
+    def __init__(self, lfx, vim, *args, **kwargs) -> None:
+        super().__init__(lfx, vim)
+        self.color_hl_id = self.vim.api.create_namespace('lfx#document_color#ns_id')
 
     def params(self, options) -> Dict[str, Any]:
         view = self.current_view()
@@ -38,7 +38,7 @@ class DocumentColorHelper(RequestHelper, method=RequestMethod.DOCUMENT_COLOR, ca
             luminance = red * 0.2126 + green * 0.7152 + blue * 0.722
             fg_color = 'ffffff' if luminance < 140 else '000000'
 
-            hl_group = 'ULF_color_{}'.format(bg_color)
+            hl_group = 'LFX_color_{}'.format(bg_color)
 
             if not self.vim.funcs.hlexists(hl_group):
                 self.vim.command('highlight! {} guibg=#{} guifg=#{}'.format(hl_group, bg_color, fg_color))
@@ -47,9 +47,9 @@ class DocumentColorHelper(RequestHelper, method=RequestMethod.DOCUMENT_COLOR, ca
 
             range_ = Range.from_lsp(color_info['range'])
 
-            start_row, start_col = self.ulf.editor.adjust_from_lsp(file_path, range_.start.row,
+            start_row, start_col = self.lfx.editor.adjust_from_lsp(file_path, range_.start.row,
                                                                    range_.start.col)
-            end_row, end_col = self.ulf.editor.adjust_from_lsp(file_path, range_.end.row,
+            end_row, end_col = self.lfx.editor.adjust_from_lsp(file_path, range_.end.row,
                                                                range_.end.col)
             self.vim.current.buffer.add_highlight(hl_group, start_row, start_col, end_col,
                                                   src_id=self.color_hl_id)

@@ -1,4 +1,4 @@
-from ..ulf import RequestHelper
+from ..lfx import RequestHelper
 from ..core.typing import Any, Dict, Iterable
 from ..core.protocol import RequestMethod
 # from ..core.logging import debug
@@ -34,10 +34,10 @@ class SignatureHelpHelper(RequestHelper, method=RequestMethod.SIGNATURE_HELP, ca
         else:
             pre = active_signature.label
 
-        if self.vim.vars.get('ulf#signature_help#use_echo'):
+        if self.vim.vars.get('lfx#signature_help#use_echo'):
             cmd = 'echo "" | '
             cmd += 'echon "{}" | '.format(pre.replace('"', '\\"'))
-            cmd += 'echohl ULFActiveParameter | echon "{}" | echohl None | '.format(
+            cmd += 'echohl LFXActiveParameter | echon "{}" | echohl None | '.format(
                  label.replace('"', '\\"'))
             cmd += 'echon "{}"'.format(post.replace('"', '\\"'))
             self.vim.command(cmd)
@@ -46,17 +46,17 @@ class SignatureHelpHelper(RequestHelper, method=RequestMethod.SIGNATURE_HELP, ca
             highlights = []
             offset = 0
             if start and end:
-                highlights.append(['ULFActiveParameter', 0,
+                highlights.append(['LFXActiveParameter', 0,
                                    to_byte_index(content, start) + 1,
                                    to_byte_index(content, end) + 1])
                 offset = self._calculate_offset(content, start)
-            self.vim.call('ulf#show_popup', [content], {'prefer_top': True,
+            self.vim.call('lfx#show_popup', [content], {'prefer_top': True,
                                                         'offsets': [offset, 0],
                                                         'paddings': [1, 0],
                                                         'highlights': highlights})
 
     def _calculate_offset(self, content: str, start: int) -> int:
-        session = self.ulf.session_for_view(self.current_view(), self.capability)
+        session = self.lfx.session_for_view(self.current_view(), self.capability)
         options = session.get_capability(self.capability)
         if type(options) == dict:
             triggers = options.get('triggers', '(,')

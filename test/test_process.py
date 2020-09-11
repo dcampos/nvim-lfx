@@ -1,5 +1,5 @@
 from io import BytesIO
-from ulf.core.process import log_stream
+from lfx.core.process import log_stream
 from unittest import TestCase
 from unittest.mock import MagicMock
 import os

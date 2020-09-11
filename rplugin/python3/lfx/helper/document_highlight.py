@@ -1,4 +1,4 @@
-from ..ulf import RequestHelper
+from ..lfx import RequestHelper
 from ..core.protocol import RequestMethod, Range
 # from ..core.logging import debug
 from ..core.typing import Dict, Any
@@ -9,9 +9,9 @@ class DocumentHighlightHelper(RequestHelper,
                               method=RequestMethod.DOCUMENT_HIGHLIGHT,
                               capability='documentHighlightProvider'):
 
-    def __init__(self, ulf, vim, *args, **kwargs) -> None:
-        super().__init__(ulf, vim)
-        self.symbol_hl_id = self.vim.api.create_namespace('ulf#document_highlight#ns_id')
+    def __init__(self, lfx, vim, *args, **kwargs) -> None:
+        super().__init__(lfx, vim)
+        self.symbol_hl_id = self.vim.api.create_namespace('lfx#document_highlight#ns_id')
 
     def params(self, options) -> Dict[str, Any]:
         view = self.current_view()
@@ -29,10 +29,10 @@ class DocumentHighlightHelper(RequestHelper,
 
     def _add_highlights(self, highlights):
         self.vim.current.buffer.clear_highlight(src_id=self.symbol_hl_id)
-        hl_group = self.vim.vars.get('ulf#highlight#document_highlight', 'Search')
+        hl_group = self.vim.vars.get('lfx#highlight#document_highlight', 'Search')
         for (start, end) in highlights:
             file_path = self.current_view().file_name()
-            start_row, start_col = self.ulf.editor.adjust_from_lsp(file_path, start.row, start.col)
-            end_row, end_col = self.ulf.editor.adjust_from_lsp(file_path, end.row, end.col)
+            start_row, start_col = self.lfx.editor.adjust_from_lsp(file_path, start.row, start.col)
+            end_row, end_col = self.lfx.editor.adjust_from_lsp(file_path, end.row, end.col)
             self.vim.current.buffer.add_highlight(hl_group, start_row, start_col, end_col,
                                                   src_id=self.symbol_hl_id)

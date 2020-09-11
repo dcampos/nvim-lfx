@@ -20,7 +20,7 @@ def set_log_file(file: str) -> None:
 
 def setup_log() -> None:
     global logger
-    logger = logging.getLogger('ULF_LOG')
+    logger = logging.getLogger('LFX_LOG')
     logger.setLevel(logging.DEBUG)
     if log_file:
         handler = logging.FileHandler(log_file)

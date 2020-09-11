@@ -1,4 +1,4 @@
-from ..ulf import RequestHelper
+from ..lfx import RequestHelper
 from ..core.protocol import RequestMethod, Point
 # from ..core.logging import debug
 from ..core.url import uri_to_filename
@@ -23,7 +23,7 @@ class WorkspaceSymbolHelper(RequestHelper, method=RequestMethod.WORKSPACE_SYMBOL
 
     def handle_response(self, response) -> None:
         if not response:
-            self.ulf.editor.error_message('No symbol found!')
+            self.lfx.editor.error_message('No symbol found!')
             return
 
         self.vim.async_call(self._display_locations, response)
@@ -32,7 +32,7 @@ class WorkspaceSymbolHelper(RequestHelper, method=RequestMethod.WORKSPACE_SYMBOL
         def parse_info(location) -> Dict:
             file_name = uri_to_filename(location['location']['uri'])
             point = Point.from_lsp(location['location']['range']['start'])
-            row, col = self.ulf.editor.adjust_from_lsp(file_name, point.row, point.col)
+            row, col = self.lfx.editor.adjust_from_lsp(file_name, point.row, point.col)
             row += 1
             col += 1
             return {'filename': file_name,
@@ -42,7 +42,7 @@ class WorkspaceSymbolHelper(RequestHelper, method=RequestMethod.WORKSPACE_SYMBOL
 
         if len(locations) == 1:
             location = locations[0]
-            self.ulf.editor.goto(location['filename'], location['lnum'], location['col'])
+            self.lfx.editor.goto(location['filename'], location['lnum'], location['col'])
         else:
             self.vim.call('setqflist', locations)
             self.vim.command('botright copen')
