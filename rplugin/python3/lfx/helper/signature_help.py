@@ -6,6 +6,7 @@ from ..core.signature_help import create_signature_help
 from ..core.views import text_document_position_params
 from ..util import to_byte_index
 
+MAX_LENGTH = 120
 
 class SignatureHelpHelper(RequestHelper, method=RequestMethod.SIGNATURE_HELP, capability='signatureHelpProvider'):
 
@@ -42,6 +43,7 @@ class SignatureHelpHelper(RequestHelper, method=RequestMethod.SIGNATURE_HELP, ca
             cmd += 'echon "{}"'.format(post.replace('"', '\\"'))
             self.vim.command(cmd)
         else:
+            (start, end, pre, post) = self._truncate_signature(pre, label, post, start, end)
             content = '{}{}{}'.format(pre, label, post)
             highlights = []
             offset = 0
@@ -54,6 +56,20 @@ class SignatureHelpHelper(RequestHelper, method=RequestMethod.SIGNATURE_HELP, ca
                                                         'offsets': [offset, 0],
                                                         'paddings': [1, 0],
                                                         'highlights': highlights})
+
+    def _truncate_signature(self, pre, label, post, start, end) -> (int, int, str, str):
+        total_length = len(pre) + len(label) + len(post)
+        max_length = self.vim.vars.get('lfx#signature_help#max_length', MAX_LENGTH)
+        if max_length >= 0 and total_length > max_length:
+            dif = total_length - 120
+            if len(pre) > len(post):
+                pre = '…' + pre[-len(pre)+dif:]
+                start = start - dif + 1
+                end = end - dif + 1
+            else:
+                post = post[:len(post)-dif] + '…'
+        return start, end, pre, post
+
 
     def _calculate_offset(self, content: str, start: int) -> int:
         session = self.lfx.session_for_view(self.current_view(), self.capability)
